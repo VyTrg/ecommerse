@@ -1,49 +1,222 @@
 /* src/styles/Header.css */
+/* src/styles/Header.css */
+.header .logo img {
+  width: 200px; /* Giữ tỷ lệ khung hình */
+  height: 60px; /* Đặt chiều cao của logo */
+  max-width: 100%; /* Đảm bảo logo không bị kéo giãn ra ngoài */
+  
+}
+
+/* Header.css */
+.nav-links {
+  list-style-type: none; 
+  padding: 0;  
+  margin: 0;  
+}
+/* Header.css */
+.nav-links li a {
+  display: flex;
+  align-items: center; 
+  font-weight: bold; 
+}
+
+.nav-links li a img, .nav-links li a svg {
+  margin-right: 8px; /* Khoảng cách giữa biểu tượng và văn bản */
+  font-size: 20px;   /* Kích thước của biểu tượng */
+  font-weight: bold;
+}
+
+.nav-links li {
+  display: inline-block;  
+  margin-right: 20px; 
+}
+
+.mobile-menu ul {
+  list-style-type: none;  
+  padding: 0;
+  margin: 0;
+}
+
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #000;
-    padding: 10px 20px;
-    color: white;
+  width: 100%; 
+  max-width: 100%; 
+  padding: 10px 20px; /* Điều chỉnh padding để header không bị quá chật */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.logo {
+  flex:  1;
+  font-size: 0.5px;
+
+  color: #ffffff;
+  text-align: center;
+  width: 200px;
+}
+
+.nav {
+  flex: 1;
+  display: flex;
+  justify-content: space-evenly; /* Căn giữa các liên kết menu */
+}
+
+.nav-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+}
+
+.nav-links li a:hover {
+  color: #000000;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 20px;
+  align-items: center;
+}
+
+.currency select {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.icons .icon {
+  font-size: 20px;
+  color: #333;
+  text-decoration: none;
+}
+
+.icons .icon:hover {
+  color: #0e0f0f;
+}
+
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #333;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  display: none;
+}
+
+.mobile-menu.open {
+  display: block;
+}
+.header-actions {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 20px;
+  align-items: center;
+  flex: 1;
+  margin-left: -10px;
+}
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    width: 100%; /* Đảm bảo header chiếm toàn bộ chiều rộng */
   }
-  
-  .nav ul {
+
+  .nav {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
+
+  .header-actions {
+    margin-top: 10px;
+    flex-direction: column;
+  }
+
+  .mobile-menu-button {
+    display: block;
+  }
+
+  .mobile-menu.open {
+    display: block;
+  }
+
+  .mobile-menu ul {
     list-style: none;
-    display: flex;
+    padding: 10px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
-  
-  .nav ul li {
-    margin-right: 20px;
+
+  .mobile-menu ul li {
+    margin: 10px 0;
   }
-  
-  .nav ul li a {
+
+  .mobile-menu ul li a {
+    color: #333;
+    font-size: 16px;
     text-decoration: none;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
   }
-  
-  .logo h1 {
-    font-size: 2em;
-    margin: 0;
+  /* Đặt mặc định cho thanh điều hướng */
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links li {
+  margin-right: 20px;
+}
+
+/* Media Queries cho màn hình nhỏ */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;  
+    flex-direction: column; 
+    background-color: #fff; 
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }
-  
-  .cart {
-    display: flex;
-    align-items: center;
+
+  .nav-links.open {
+    display: flex; 
   }
-  
-  .cart button {
-    background-color: #333;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    font-size: 16px;
-    cursor: pointer;
+
+  .nav-links li {
+    margin: 10px 0;  
   }
-  
-  .cart button:hover {
-    background-color: #444;
+}
+
+
+.mobile-menu-button {
+  display: block; 
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+
+@media (min-width: 769px) {
+  .mobile-menu-button {
+    display: none;
   }
-  
+}
+
+
+
+}

@@ -1,11 +1,12 @@
-import Navigator from "../components/Navigator";
+// src/components/Navigator.tsx
+import React from "react";
 
-const Home: React.FC = () => {
+const Navigator: React.FC = () => {
   return (
-    <div>
-      <Navigator />
-    </div>
+    <nav>
+      {/* Nội dung của Navigator */}
+    </nav>
   );
-};
+}
 
-export default Home;
+export default Navigator;

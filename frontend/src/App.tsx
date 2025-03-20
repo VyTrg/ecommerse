@@ -1,21 +1,14 @@
-// src/App.tsx
-import React from 'react';
-import './App.css';
-import Header from './components/Header';
-import RegisterForm from './components/RegisterForm';
-import LoginSection from './components/LoginSection';
-import Footer from './components/Footer';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Shop from "./pages/Shop";
+import React from "react";
 
 const App: React.FC = () => {
   return (
-    <div className="App">
-      <Header />
-      <div className="register-container">
-        <RegisterForm />
-        <LoginSection />
-      </div>
-      <Footer />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Shop />} />
+      </Routes>
+    </Router>
   );
 };
 

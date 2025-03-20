@@ -1,0 +1,30 @@
+.shop-container {
+    display: flex;
+    min-height: 100vh;
+  }
+  
+  .sidebar {
+    flex: 1;
+    background-color: #fff;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .main-content {
+    flex: 3;
+    padding: 16px;
+    margin-right: 500px;
+  }
+  
+  h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+  
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  

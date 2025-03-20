@@ -1,74 +1,91 @@
 import React, { useState } from 'react';
-import '../styles/RegisterForm.css';  // Đúng đường dẫn cho RegisterForm.css
-import '../styles/Header.css';        // Đúng đường dẫn cho Header.css
-import '../styles/Footer.css';        // Đúng đường dẫn cho Footer.css
+import '../styles/RegisterForm.css';  // Ensure the correct path to your CSS file
+import { Link } from 'react-router-dom';
+const RegisterSection: React.FC = () => {
+  // Local state for handling form inputs
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-const RegisterForm: React.FC = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form Submitted', formData);
+  const handleRegister = () => {
+    // Example: Handle registration logic here (e.g., API call)
+    if (password !== confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+    console.log('Username:', username);
+    console.log('Email:', email);
+    console.log('Password:', password);
   };
 
   return (
-    <div className="register-form">
+    <div className="register-section">
       <h2>REGISTER</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username *</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            required
+      <p>
+        Creating an account allows you to access your order status and history. Fill in the fields below to sign up.
+        We will only ask for necessary information to make the purchase process faster and easier.
+      </p>
+
+      <form className="register-form" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+        {/* Username Input */}
+        <div className="input-group">
+          <label htmlFor="username">Username</label>
+          <input 
+            type="text" 
+            id="username" 
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            required 
+            placeholder="Enter your username" 
           />
         </div>
-        <div className="form-group">
-          <label>Email address *</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
+
+        {/* Email Input */}
+        <div className="input-group">
+          <label htmlFor="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+            placeholder="Enter your email" 
           />
         </div>
-        <div className="form-group">
-          <label>Password *</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
+
+        {/* Password Input */}
+        <div className="input-group">
+          <label htmlFor="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+            placeholder="Enter your password" 
           />
         </div>
-        <div className="form-group">
-          <label>
-            <input type="checkbox" />
-            I'm not a robot
-          </label>
+
+        {/* Confirm Password Input */}
+        <div className="input-group">
+          <label htmlFor="confirmPassword">Confirm Password</label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            value={confirmPassword} 
+            onChange={(e) => setConfirmPassword(e.target.value)} 
+            required 
+            placeholder="Confirm your password" 
+          />
+           <p>If you have an account, <Link to="/login">login here</Link></p>
         </div>
-        <button type="submit" className="submit-btn">
-          REGISTER
-        </button>
+
+        {/* Register Button */}
+        <button type="submit" className="register-btn">REGISTER</button>
       </form>
     </div>
   );
 };
 
-export default RegisterForm;
+export default RegisterSection;

@@ -1,0 +1,76 @@
+.filter-sidebar {
+    width: 300px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-left: 400px;
+  }
+  
+  h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .category-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .category-title {
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .category-title.active {
+    color: black;
+  }
+  
+  .toggle-icon {
+    font-size: 12px;
+  }
+  
+  .subcategory-list {
+    list-style: none;
+    padding-left: 16px;
+  }
+  
+  .subcategory-list li {
+    font-size: 14px;
+    padding: 4px 0;
+    cursor: pointer;
+  }
+  
+  .price-filter {
+    margin-top: 20px;
+  }
+  
+  .price-filter input {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .price-filter p {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .filter-button {
+    background-color: black;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .filter-button:hover {
+    background-color: #333;
+  }
+  
