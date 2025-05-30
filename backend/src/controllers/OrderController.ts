@@ -28,6 +28,7 @@ export class OrderController {
         res.json(order);
       }
     } catch (error) {
+      console.error("[OrderController.getOrderById] error:", error);
       res.status(500).json({ message: "Error fetching order", error });
     }
   }

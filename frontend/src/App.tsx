@@ -29,6 +29,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryAdminPage from "./components/CategoryAdminPage";
 import AdminDashboard from "./pages/Dashboard";
 import UserManagement from "./components/Usermanangement";
+import OrderDetailPage from "./pages/OrderDetail";
 
 const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
@@ -62,6 +63,9 @@ const App = () => {
             <Route path="users" element={<UserManagement />} />
             <Route path="orders" element={<OrderManagement />} />
             <Route path="categories" element={<CategoryAdminPage />} />
+
+            <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
+
           </Route>
         </Routes>
 

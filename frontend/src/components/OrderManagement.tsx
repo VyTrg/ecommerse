@@ -1,21 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/OrderManagement.css';
+import { useNavigate } from 'react-router-dom';
 
 type Order = {
   id: number;
-  customer_name: string;
-  total_price: number;
-  status: string;
-  created_at: string;
+  user: {
+    id: number;
+    username: string;
+    phone: string;
+    email: string;
+  };
+  order_total: number;
+  orderStatus: {
+    id: number;
+    status: string; 
+  } | null;
+  orderDate: string;
 };
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetch('http://localhost:3001/api/orders')
       .then(res => res.json())
-      .then(data => setOrders(data))
+      .then(data => {
+  console.log('Orders from API:', data);
+  setOrders(data);
+})
       .catch(err => console.error('Error loading order:', err));
   }, []);
 
@@ -27,6 +39,10 @@ const OrderManagement = () => {
         })
         .catch(err => console.error('Error deleting order:', err));
     }
+  };
+
+  const goToDetail = (id: number) => {
+    navigate(`/admin/orders/${id}`);
   };
 
   return (
@@ -45,16 +61,20 @@ const OrderManagement = () => {
           </tr>
         </thead>
         <tbody>
-          {orders.map(order => (
-            <tr key={order.id}>
-              <td>{order.id}</td>
-              <td>{order.customer_name}</td>
-              <td>{order.total_price?.toLocaleString()}₫</td>
-              <td>{order.status}</td>
-              <td>{new Date(order.created_at).toLocaleString('vi-VN')}</td>
+          {orders.map(orders => (
+            <tr key={orders.id}>
+              <td>{orders.id}</td>
+              <td>{orders.user.username}</td>
+              <td>{orders.order_total?.toLocaleString()}₫</td>
+              <td>{orders.orderStatus?.status}</td>
+              <td>{new Date(orders.orderDate).toLocaleString('vi-VN')}</td>
               <td>
-                <button className="order-button btn-detail">Detail</button>
-                <button className="order-button btn-delete" onClick={() => handleDelete(order.id)}>
+                <button
+                  className="order-button btn-detail"
+                  onClick={() => goToDetail(orders.id)}>
+                  Detail</button>
+                <button className="order-button btn-delete" 
+                  onClick={() => handleDelete(orders.id)}>
                   Delete
                 </button>
               </td>

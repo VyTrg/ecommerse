@@ -2,24 +2,24 @@ import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
 import { Order } from "../entity/Order";
 import { ProductItem } from "../entity/ProductItem"; // Adjusted path to match the correct directory
-import { Order_item } from "../entity/OrderItems";
+import { OrderItem } from "../entity/OrderItems";
 
 export class OrderItemService {
     createOrderItem(body: any) {
         throw new Error("Method not implemented.");
     }
-    private orderItemRepository: Repository<Order_item>;
+    private orderItemRepository: Repository<OrderItem>;
     private orderRepository: Repository<Order>;
     private productItemRepository: Repository<ProductItem>;
 
     constructor() {
-        this.orderItemRepository = AppDataSource.getRepository(Order_item);
+        this.orderItemRepository = AppDataSource.getRepository(OrderItem);
         this.orderRepository = AppDataSource.getRepository(Order);
         this.productItemRepository = AppDataSource.getRepository(ProductItem);
     }
 
     // Lấy tất cả order items (có quan hệ)
-    async getAllOrderItems(): Promise<Order_item[]> {
+    async getAllOrderItems(): Promise<OrderItem[]> {
         return this.orderItemRepository.find({
             relations: ["order", "productItem"],
         });
