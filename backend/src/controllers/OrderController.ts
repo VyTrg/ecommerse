@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { OrderService } from "../services/OrderService";
 import { Product } from "../entity/Product";
 import { Size } from "../entity/Size";
@@ -46,73 +46,75 @@ export class OrderController {
   // Tạo đơn hàng kèm danh sách order_items
   static async createOrderWithItems(req: Request, res: Response) {
     try {
-      const {
-        user_id,
-        shipping_address_id,
-        shipping_method_id,
-        order_status_id,
-        order_total,
-        order_items,
-      } = req.body;
+      // const {
+      //   user_id,
+      //   shipping_address_id,
+      //   shipping_method_id,
+      //   order_status_id,
+      //   order_total,
+      //   order_items,
+      // } = req.body;
 
-      const newOrder = await orderService.createOrder({
-        user: {
-            id: user_id,
-            keycloakId: "",
-            username: "",
-            hash_password: "",
-            phone: "",
-            email: "",
-            carts: [],
-            orders: []
-        },
-        shippingAddress: {
-            id: shipping_address_id,
-            street_name: "",
-            city: "",
-            region: "",
-            district: "",
-            country: "",
-            user_addresses: []
-        },
-        shippingMethod: {
-            id: shipping_method_id,
-            name: "",
-            price: 0
-        },
-        orderStatus: {
-            id: order_status_id,
-            status: ""
-        },
-        order_total,
-      });
+      // const newOrder = await orderService.createOrder({
+      //   user: {
+      //       id: user_id,
+      //       keycloakId: "",
+      //       username: "",
+      //       hash_password: "",
+      //       phone: "",
+      //       email: "",
+      //       carts: [],
+      //       orders: []
+      //   },
+      //   shippingAddress: {
+      //       id: shipping_address_id,
+      //       street_name: "",
+      //       city: "",
+      //       region: "",
+      //       district: "",
+      //       country: "",
+      //       user_addresses: []
+      //   },
+      //   shippingMethod: {
+      //       id: shipping_method_id,
+      //       name: "",
+      //       price: 0
+      //   },
+      //   orderStatus: {
+      //       id: order_status_id,
+      //       status: ""
+      //   },
+      //   order_total,
+      // });
 
-      const createdItems = [];
+      // const createdItems = [];
 
-      for (const item of order_items) {
-        const orderItem = await orderService.addOrderItem(newOrder.id, {
-          productItem: {
-              id: item.product_item_id,
-              product: new Product,
-              size: new Size,
-              image: new Image,
-              color: new Color,
-              cartItems: [],
-              orderItems: [],
-              quantity: 0,
-              price: ""
-          },
-          quantity: item.quantity,
-          price: item.price,
-        });
-        createdItems.push(orderItem);
-      }
+      // for (const item of order_items) {
+      //   const orderItem = await orderService.addOrderItem(newOrder.id, {
+      //     productItem: {
+      //         id: item.product_item_id,
+      //         product: new Product,
+      //         size: new Size,
+      //         image: new Image,
+      //         color: new Color,
+      //         cartItems: [],
+      //         orderItems: [],
+      //         quantity: 0,
+      //         price: ""
+      //     },
+      //     quantity: item.quantity,
+      //     price: item.price,
+      //   });
+      //   createdItems.push(orderItem);
+      // }
 
-      res.status(201).json({
-        message: "Order with items created successfully",
-        order: newOrder,
-        order_items: createdItems,
-      });
+      const order = await orderService.createOrderWithItems(req.body);
+      // res.status(201).json({
+      //   message: "Order with items created successfully",
+      //   order: newOrder,
+      //   order_items: createdItems,
+      // });
+      res.status(201).json(order);
     } catch (error) {
       res.status(500).json({ message: "Error creating order with items", error });
     }
@@ -155,4 +157,45 @@ export class OrderController {
       res.status(500).json({ message: "Error adding order item", error });
     }
   }
+
+  // Cập nhật trạng thái đơn hàng (Shipping, Delivered, Cancelled)
+  static updateOrderStatus: RequestHandler = async (req, res, next) => {
+    try {
+      const orderId = parseInt(req.params.id, 10);
+      const { status } = req.body;
+
+      // 1) Kiểm tra req.body.status có phải string không
+      if (typeof status !== "string") {
+        res.status(400).json({ message: "Missing or invalid 'status' in body" });
+        return; // không trả về res.json(), chỉ kết thúc hàm
+      }
+
+      // 2) Gọi service để cập nhật
+      const updatedOrder = await orderService.updateOrderStatusByText(orderId, status);
+
+      // 3) Nếu service không tìm thấy order
+      if (!updatedOrder) {
+        res.status(404).json({ message: "Order not found" });
+        return;
+      }
+
+      // 4) Thành công: chỉ gọi res.json(...) rồi return
+      res.json({ message: "Order status updated", order: updatedOrder });
+      return;
+
+    } catch (error: any) {
+      // Bắt lỗi “Invalid status text” từ service
+      if (error.message === "Invalid status text") {
+        res.status(400).json({ message: "Invalid status value" });
+        return;
+      }
+      // Các lỗi khác: log và trả 500
+      console.error("[OrderController.updateOrderStatus] ERROR:", error);
+      res.status(500).json({
+        message: "Error updating order status",
+        error: error.message || error.toString(),
+      });
+      return;
+    }
+  };
 }

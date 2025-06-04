@@ -3,6 +3,7 @@ import session from 'express-session';
 import { keycloak, memoryStore } from './keycloak';
 
 const app = express();
+app.use(express.json());
 
 app.use(session({
     secret: 'lTyYzz3jq8sOmHpyA9NQIdt3BQvCf2MZ',
