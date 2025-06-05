@@ -1,8 +1,9 @@
-import express, {Request, Response} from "express";
+import {Request, Response} from "express";
 import {Token} from "keycloak-connect";
 const USER_ROLE = process.env.USER_ROLE;
 const ADMIN_ROLE = process.env.ADMIN_ROLE;
-
+import dotenv from 'dotenv';
+dotenv.config();
 const session = require("express-session");
 const Keycloak = require("keycloak-connect");
 
@@ -24,11 +25,11 @@ Keycloak.prototype.accessDenied = function (request: Request, response: Response
 const keycloak = new Keycloak({ store: memoryStore }, kcConfig);
 
 function adminOnly(token: Token, request: Request) {
-    return token.hasRole(`realm:${ADMIN_ROLE}`);
+    return token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${ADMIN_ROLE}`);
 }
 
 function isAuthenticated(token: Token, request: Request) {
-    return token.hasRole(`realm:${ADMIN_ROLE}`) || token.hasRole(`realm:${USER_ROLE}`);
+    return token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${ADMIN_ROLE}`) || token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${USER_ROLE}`);
 }
 
 export { keycloak, isAuthenticated, adminOnly, memoryStore };

@@ -23,17 +23,13 @@ import path from "path";
 
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
-import {Token} from "keycloak-connect";
-import { OrderItem } from "./entity/OrderItem";
+import session from "express-session";
 
 dotenv.config();
 const app = express();
+
 const PORT = 3001;
-
-// keycloak config
-
-
-
+app.use(keycloak.middleware());
 
 app.use(cors({
     origin: "http://localhost:3000",
