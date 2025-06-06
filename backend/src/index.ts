@@ -16,45 +16,48 @@ import product_itemRoutes from "./routes/productItemRoutes";
 import authRoutes from "./routes/authRoutes";
 import StatisticsRoutes from "./routes/StatisticsRoutes";
 import Order_itemRoutes from "./routes/order_itemRoutes";
-
+import session from 'express-session';
 
 import path from "path";
 
 
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
-import session from "express-session";
 
 dotenv.config();
 const app = express();
 
 const PORT = 3001;
-app.use(keycloak.middleware());
-
+app.use(express.json());
+app.use(session({
+    secret: process.env.SECRET || 'app_secret',
+    resave: false,
+    saveUninitialized: true,
+    store: memoryStore
+}));
 app.use(cors({
     origin: "http://localhost:3000",
     credentials: true
 }));
-app.use(
-    "/api/users",
-    keycloak.protect(isAuthenticated),
-    UserRouter
-);
-app.use("/api/promotions", promotionRoutes); 
-app.use("/api/sizes", sizeRoutes); 
+app.use(keycloak.middleware());
+
+
+app.use("/api/users", keycloak.protect(isAuthenticated), UserRouter);
+app.use("/api/promotions", keycloak.protect(adminOnly),promotionRoutes);
+app.use("/api/sizes", sizeRoutes); //get for public
 app.use("/api/user-addresses", keycloak.protect(isAuthenticated),User_addressRoute);
-app.use("/api/reviews", ReviewRoutes);
+app.use("/api/reviews", ReviewRoutes);//get for public
 app.use("/api/shipping-methods",keycloak.protect(isAuthenticated), Shipping_methodRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/product-items", product_itemRoutes);
-app.use("/api/images", imageRoutes);
-app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);//get for public
+app.use("/api/product-items", product_itemRoutes);//get for public
+app.use("/api/images", imageRoutes);//get for public
+app.use("/api/categories", categoryRoutes);//get for public
 app.use("/api/orders", keycloak.protect(isAuthenticated),orderRoutes);
-app.use("/api/auth", keycloak.protect(isAuthenticated),authRoutes);
+
 app.use("/api/statistics",keycloak.protect(adminOnly), StatisticsRoutes);
-app.use("/api/orders", orderRoutes);
+app.use("/api/orders",keycloak.protect(isAuthenticated),orderRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/order_items",Order_itemRoutes);
+app.use("/api/order_items", keycloak.protect(isAuthenticated),Order_itemRoutes);
 
 // Serve static files from the uploads directory
 app.use("/uploads", keycloak.protect(adminOnly),express.static(path.join(__dirname, "../uploads")));
