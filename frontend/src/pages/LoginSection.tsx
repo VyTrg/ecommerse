@@ -24,11 +24,11 @@ const LoginSection: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Lưu thông tin user vào localStorage nếu muốn
-        localStorage.setItem('userInfo', JSON.stringify(data.user));
+        sessionStorage.setItem('token', data.accessToken);
+        sessionStorage.setItem('userInfo', JSON.stringify(data.user));
 
-        alert('Login successful');
-        navigate('/'); // ➜ chuyển về trang chủ sau đăng nhập
+        // alert('Login successful');
+        navigate('/');
       } else {
         alert(data.message || 'Incorrect username or password');
       }

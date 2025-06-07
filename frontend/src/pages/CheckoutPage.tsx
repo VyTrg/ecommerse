@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import "../styles/CheckoutPage.css";
 
-const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+const currentUser = JSON.parse(sessionStorage.getItem("currentUser") || "null");
 
 const CheckoutPage: React.FC = () => {
   const { cart, updateQuantity, removeItem, clearCart } = useCart();
@@ -73,6 +73,7 @@ const CheckoutPage: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(payload),
       });

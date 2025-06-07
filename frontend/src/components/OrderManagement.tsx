@@ -21,7 +21,11 @@ const OrderManagement = () => {
   const navigate = useNavigate(); 
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/orders')
+    fetch('http://localhost:3001/api/orders',{
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('token')}`
+      }
+    })
       .then((res) => res.json())
       .then((data) => {
         setOrders(data);
@@ -31,7 +35,10 @@ const OrderManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this order?')) {
-      fetch(`http://localhost:3001/api/orders/${id}`, { method: 'DELETE' })
+      fetch(`http://localhost:3001/api/orders/${id}`, { method: 'DELETE',
+      headers: {
+        'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''
+      }})
         .then((res) => {
           if (res.ok) setOrders(orders.filter((o) => o.id !== id));
         })

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import AccessoriesPage from "./pages/AccessoriesPage";
@@ -12,17 +12,17 @@ import MyAccount from "./pages/MyAccount";
 import ItemPage from "./pages/ItemPage";
 import LoginSection from "./pages/LoginSection";
 import RegisterSection from "./pages/RegisterSection";
-import ShoppingCartPopup from "./components/ShoppingCartPopup";
+// import ShoppingCartPopup from "./components/ShoppingCartPopup";
 import ForgotPassword from "./components/ForgotPassword";
 import ProductManagement from "./components/ProductManagement";
 import OrderManagement from "./components/OrderManagement";
 
 import SearchResult from "./pages/SearchResult";
-import { CartProvider, useCart } from "./contexts/CartContext"; 
+import { CartProvider} from "./contexts/CartContext";
 import CartPopupWrapper from "./components/CartPopupWrapper"; 
 import "./assets/themify-icons/themify-icons.css";
 import CheckoutPage from "./pages/CheckoutPage";
-import CategoryPage from "./pages/CategoryPage";
+// import CategoryPage from "./pages/CategoryPage";
 
 import AdminLayout from "./components/AdminLayout";
 import ProductDetailPage from "./pages/ProductDetailPage";

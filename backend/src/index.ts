@@ -42,11 +42,11 @@ app.use(cors({
 app.use(keycloak.middleware());
 
 
-app.use("/api/users", keycloak.protect(isAuthenticated), UserRouter);
+app.use("/api/users", keycloak.protect(adminOnly), UserRouter);
 app.use("/api/promotions", keycloak.protect(adminOnly),promotionRoutes);
 app.use("/api/sizes", sizeRoutes); //get for public
 app.use("/api/user-addresses", keycloak.protect(isAuthenticated),User_addressRoute);
-app.use("/api/reviews", ReviewRoutes);//get for public
+app.use("/api/reviews",keycloak.protect(isAuthenticated), ReviewRoutes);//get for public
 app.use("/api/shipping-methods",keycloak.protect(isAuthenticated), Shipping_methodRoutes);
 app.use("/api/products", productRoutes);//get for public
 app.use("/api/product-items", product_itemRoutes);//get for public
@@ -55,7 +55,7 @@ app.use("/api/categories", categoryRoutes);//get for public
 app.use("/api/orders", keycloak.protect(isAuthenticated),orderRoutes);
 
 app.use("/api/statistics",keycloak.protect(adminOnly), StatisticsRoutes);
-app.use("/api/orders",keycloak.protect(isAuthenticated),orderRoutes);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/order_items", keycloak.protect(isAuthenticated),Order_itemRoutes);
 

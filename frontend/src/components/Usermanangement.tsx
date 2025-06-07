@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, UserInput } from '../types/User';
 import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
@@ -12,10 +12,17 @@ const UserManagement = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   useEffect(() => {
-    fetch('http://localhost:3001/api/users')
+    fetch('http://localhost:3001/api/users', {
+      headers: {
+        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+      }
+    })
       .then(res => res.json())
       .then(data => setUsers(data))
-      .catch(err => console.error('Failed to load users:', err));
+      .catch(err => {
+        console.error('Failed to load users:', err);
+
+      });
   }, []);
 
   const handleAdd = () => {
@@ -31,7 +38,10 @@ const UserManagement = () => {
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       fetch(`http://localhost:3001/api/users/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
+        }
       })
         .then(res => {
           if (res.ok) {
@@ -49,7 +59,7 @@ const UserManagement = () => {
       // 👉 SỬA người dùng
       fetch(`http://localhost:3001/api/users/${user.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
         body: JSON.stringify(user)
       })
         .then(res => res.json())

@@ -18,7 +18,11 @@ const OrderDetails: React.FC = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/orders/${id}`);
+        const res = await fetch(`http://localhost:3001/api/orders/${id}`,{
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        });
         const data = await res.json();
         setOrder(data);
       } catch (err) {

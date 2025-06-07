@@ -58,7 +58,9 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE',
+      headers: { 'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},})
         .then(res => {
           if (res.ok) setProducts(prev => prev.filter(p => p.id !== id));
         })
@@ -69,7 +71,8 @@ const ProductManagement = () => {
   const handleCategoryChange = (productId: number, newCategoryId: number) => {
     fetch(`http://localhost:3001/api/products/${productId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
       body: JSON.stringify({ category_id: newCategoryId }),
     })
       .then(res => {
@@ -101,7 +104,8 @@ const ProductManagement = () => {
         // Cập nhật sản phẩm
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -124,12 +128,18 @@ const ProductManagement = () => {
 
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
             body: JSON.stringify(updateBody),
           });
         }
 
-        const updatedRes = await fetch(`http://localhost:3001/api/products`);
+        const updatedRes = await fetch(`http://localhost:3001/api/products`,
+            {
+              headers :{
+                'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''
+              }
+            });
         const updatedList = await updatedRes.json();
         setProducts(updatedList);
         setShowForm(false);
@@ -138,7 +148,8 @@ const ProductManagement = () => {
         // Thêm sản phẩm mới
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -150,7 +161,8 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' ,
+            'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             price: formData.price,
             images: [{ cloudinary_url: formData.image }],
@@ -158,7 +170,11 @@ const ProductManagement = () => {
           }),
         });
 
-        const refreshedRes = await fetch(`http://localhost:3001/api/products`);
+        const refreshedRes = await fetch(`http://localhost:3001/api/products`, {
+          headers:{
+            'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''
+          }
+        });
         const refreshedList = await refreshedRes.json();
         setProducts(refreshedList);
         setShowForm(false);

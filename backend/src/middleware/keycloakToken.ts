@@ -22,7 +22,7 @@ export async function getAdminToken() {
                 client_secret: KEYCLOAK_CLIENT_SECRET,
             }),
         }
-);
+    );
     const accessToken = await tokenResponse.json();
     return accessToken['access_token'];
 }
@@ -91,7 +91,7 @@ export async function mapUserToRole(adminToken: string, keycloakId: string) {
         throw new Error('Role "user" not found for client express-api');
     }
     await fetch(
-        `http://localhost:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${KEYCLOAK_CLIENT_ID}`,
+        `http://localhost:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
         {
             method: 'POST',
             headers: {
@@ -106,6 +106,28 @@ export async function mapUserToRole(adminToken: string, keycloakId: string) {
             ]),
         }
     );
+}
+
+export async function getAccessToken(username: string, password: string) {
+    const tokenResponse = await fetch(
+        `http://localhost:8080/realms/${REALM}/protocol/openid-connect/token`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: qs.stringify({
+                grant_type: 'password',
+                client_id: KEYCLOAK_CLIENT_ID,
+                username: username,
+                password: password,
+                client_secret: KEYCLOAK_CLIENT_SECRET,
+            }),
+        }
+    );
+    const accessToken = await tokenResponse.json();
+    return accessToken['access_token'];
+
 }
 
 
