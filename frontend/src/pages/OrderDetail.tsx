@@ -60,6 +60,12 @@ const OrderDetailPage: React.FC = () => {
   if (error) return <p className="error">Error: {error}</p>;
   if (!order) return <p>Order not found.</p>;
 
+  const itemsTotal = order.orderItems
+    .reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+  const shippingFee = order.shippingMethod?.price ?? 0;
+
+  const total = itemsTotal + shippingFee;
   return (
     <div className="order-detail-container">
       <button onClick={() => navigate(-1)} className="btn-back">
@@ -128,8 +134,8 @@ const OrderDetailPage: React.FC = () => {
       </section> }
 
       <footer className="order-total">
-        <h2>Total: {order.order_total.toLocaleString()}₫</h2>
-      </footer>
+      <h2>Grand Total: {total.toLocaleString()}₫</h2>
+    </footer>
     </div>
   );
 };

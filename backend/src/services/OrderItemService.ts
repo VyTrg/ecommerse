@@ -5,9 +5,6 @@ import { ProductItem } from "../entity/ProductItem"; // Adjusted path to match t
 import { OrderItem } from "../entity/OrderItems";
 
 export class OrderItemService {
-    createOrderItem(body: any) {
-        throw new Error("Method not implemented.");
-    }
     private orderItemRepository: Repository<OrderItem>;
     private orderRepository: Repository<Order>;
     private productItemRepository: Repository<ProductItem>;
@@ -25,13 +22,20 @@ export class OrderItemService {
         });
     }
 
+    async getByOrderId(orderId: number): Promise<OrderItem[]> {
+        return this.orderItemRepository.find({
+        where: { order: { id: orderId } },
+        relations: ["productItem", "productItem.product"],
+        });
+    }
+    
     // Tạo mới order item
-    /*async createOrderItem(data: {
+    async createOrderItem(data: {
         order: { id: number };
         productItem: { id: number };
         quantity: string;
         price: string;
-    }): Promise<Order_item> {
+    }): Promise<OrderItem> {
         const order = await this.orderRepository.findOne({ where: { id: data.order.id } });
         if (!order) throw new Error("Order not found");
 
@@ -46,7 +50,7 @@ export class OrderItemService {
         });
 
         return this.orderItemRepository.save(orderItem);
-    }*/
+    }
 
     // Xóa order item theo id
     async deleteOrderItem(id: number): Promise<boolean> {
