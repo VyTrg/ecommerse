@@ -5,7 +5,13 @@ import '../styles/OrderDetail.css';
 
 interface OrderItem {
   id: number;
-  productItem: string;
+  productItem: {
+    id: number;
+    product: {
+      id: number;
+      name: string;
+    };
+  };
   quantity: number;
   price: number;
 }
@@ -60,17 +66,14 @@ const OrderDetailPage: React.FC = () => {
   if (error) return <p className="error">Error: {error}</p>;
   if (!order) return <p>Order not found.</p>;
 
-  const itemsTotal = order.orderItems
-    .reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const itemsTotal = order.orderItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
   const shippingFee = order.shippingMethod?.price ?? 0;
 
   const total = itemsTotal + shippingFee;
   return (
     <div className="order-detail-container">
-      <button onClick={() => navigate(-1)} className="btn-back">
-        ← Back
-      </button>
+      <button onClick={() => navigate(-1)} className="btn-back">Back</button>
 
       <h1>Order Details #{order.id}</h1>
       <section className="customer-info">
@@ -95,7 +98,7 @@ const OrderDetailPage: React.FC = () => {
         <p>
           Price:{' '}
           {order.shippingMethod?.price != null
-            ? `${order.shippingMethod.price.toLocaleString()}₫`
+            ? `${order.shippingMethod.price.toLocaleString('vi', {style : 'currency', currency : 'VND'})}`
             : '—'}
         </p>
       </section>
@@ -112,7 +115,7 @@ const OrderDetailPage: React.FC = () => {
         <table className="items-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th> </th>
               <th>Product</th>
               <th>Quantity</th>
               <th>Price</th>
@@ -120,13 +123,13 @@ const OrderDetailPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {order.orderItems.map(item => (
+            {order.orderItems.map((item, index) => (
               <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.productItem}</td>
+                <td>{index + 1}</td>
+                <td>{item.productItem.product.name }</td> 
                 <td>{item.quantity}</td>
-                <td>{item.price.toLocaleString()}₫</td>
-                <td>{(item.quantity * item.price).toLocaleString()}₫</td>
+                <td>{item.price.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</td>
+                <td>{(item.quantity * item.price).toLocaleString('vi', {style : 'currency', currency : 'VND'})}</td>
               </tr>
             ))}
           </tbody>
@@ -134,7 +137,7 @@ const OrderDetailPage: React.FC = () => {
       </section> }
 
       <footer className="order-total">
-      <h2>Grand Total: {total.toLocaleString()}₫</h2>
+      <h2>Total: {total.toLocaleString('vi', {style : 'currency', currency : 'VND'})}</h2>
     </footer>
     </div>
   );

@@ -23,6 +23,7 @@ export class OrderService {
         "shippingMethod",
         "orderStatus",
         "orderItems",
+
       ],
     });
   }
@@ -37,6 +38,8 @@ export class OrderService {
         "shippingMethod",
         "orderStatus",
         "orderItems",
+        "orderItems.productItem", // Thêm quan hệ với productItem
+        "orderItems.productItem.product", // Thêm quan hệ với product
       ],
     });
   }
