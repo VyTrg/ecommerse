@@ -1,4 +1,3 @@
-// src/pages/OrderManagement.tsx
 import React, { useEffect, useState } from 'react';
 import '../styles/OrderManagement.css';
 import { useNavigate } from 'react-router-dom';

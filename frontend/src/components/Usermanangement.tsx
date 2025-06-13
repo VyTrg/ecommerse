@@ -4,6 +4,8 @@ import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
 import '../styles/UserManagement.css';
 import Pagination from '../components/Pagination';
+import ConfirmDialog from '../components/ConfirmDialog';
+import Notification from '../components/Notification';
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -11,11 +13,18 @@ const UserManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 10;
+
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+
   useEffect(() => {
     fetch('http://localhost:3001/api/users')
       .then(res => res.json())
       .then(data => setUsers(data))
-      .catch(err => console.error('Failed to load users:', err));
+      .catch(err => {
+        setNotification({ message: `Error loading users: ${err.message}`, type: 'error' });
+      });
   }, []);
 
   const handleAdd = () => {
@@ -29,24 +38,37 @@ const UserManagement = () => {
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      fetch(`http://localhost:3001/api/users/${id}`, {
+    setUserToDelete(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (userToDelete === null) {
+      setShowConfirm(false);
+      return;
+    }
+      fetch(`http://localhost:3001/api/users/${userToDelete}`, {
         method: 'DELETE'
       })
         .then(res => {
-          if (res.ok) {
-            setUsers(users.filter(u => u.id !== id));
-          } else {
-            console.error('Delete failed');
-          }
+           if (res.ok) {
+          setUsers(prev => prev.filter(u => u.id !== userToDelete));
+          setNotification({ message: 'User deleted successfully!', type: 'success' });
+        } else {
+          throw new Error(res.statusText);
+        }
+      })
+        .catch(err => {
+          setNotification({ message: `Delete failed: ${err.message}`, type: 'error' });
         })
-        .catch(err => console.error('Error deleting user:', err));
-    }
-  };
+        .finally(() => {
+          setShowConfirm(false);
+          setUserToDelete(null);
+         });
+  } // <-- Add this closing brace for handleConfirmDelete
 
   const handleFormSubmit = (user: UserInput | User) => {
     if ('id' in user) {
-      // 👉 SỬA người dùng
       fetch(`http://localhost:3001/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -56,10 +78,12 @@ const UserManagement = () => {
         .then(updated => {
           setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
           setShowForm(false);
+           setNotification({ message: 'User updated successfully!', type: 'success' });
         })
-        .catch(err => console.error('Error updating user:', err));
+        .catch(err => setNotification({ message: `Update failed: ${err.message}`, type: 'error' }));
+      
     } else {
-      // 👉 THÊM người dùng mới qua API đăng ký
+    
       fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,10 +97,10 @@ const UserManagement = () => {
           // API trả về dạng: { status: "success", user: {...} }
           setUsers(prev => [...prev, newUser.user]); // ✅ Dùng newUser.user
           setShowForm(false);
+          setNotification({ message: 'User created successfully!', type: 'success' });
         })
         .catch(err => {
-          console.error('Error add user:', err);
-          alert('Email already exists or invalid data!');
+          setNotification({ message: 'Email already exists or invalid data!', type: 'error' });
         });
     }
   };
@@ -92,6 +116,23 @@ const UserManagement = () => {
     <div className="user-management-container">
       <h2 className="user-management-title">User Management</h2>
 
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        visible={showConfirm}
+        message="Are you sure you want to delete this user?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirm(false);
+          setUserToDelete(null);
+        }}
+      />
       {!showForm && (
         <div className="user-management-action">
           <button className="btn-add" onClick={handleAdd}>Add User</button>

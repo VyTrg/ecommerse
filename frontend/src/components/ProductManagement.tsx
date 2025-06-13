@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ProductManagement.css';
 import Pagination from '../components/Pagination';
+import ConfirmDialog from '../components/ConfirmDialog';
+import Notification from '../components/Notification';
 
 type ProductItem = {
   id: number;
@@ -40,34 +42,60 @@ const ProductManagement = () => {
     description: '',
   });
 
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<number | null>(null);
+
   useEffect(() => {
     fetch('http://localhost:3001/api/products')
       .then(res => res.json())
       .then(data => setProducts(data))
-      .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
+      .catch(err => {
+        setNotification({ message: `Error loading products: ${err.message}`, type: 'error' });
+      });
 
     fetch('http://localhost:3001/api/categories')
       .then(res => {
-        if (!res.ok) throw new Error('Không thể tải danh mục');
+        if (!res.ok) throw new Error('Error loading categories');
         return res.json();
       })
       .then(data => setCategories(data))
-      .catch(err => console.error('Lỗi khi tải danh mục:', err));
+      .catch(err => {
+        setNotification({ message: `Error loading categories: ${err.message}`, type: 'error' });
+      });
   }, []);
 
   const getCategoryName = (categoryId: number): string => {
     const cat = categories.find(c => c.id === categoryId);
-    return cat ? cat.name : 'Không rõ';
+    return cat ? cat.name : 'Unknown';
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
-        .then(res => {
-          if (res.ok) setProducts(prev => prev.filter(p => p.id !== id));
-        })
-        .catch(err => console.error('Lỗi xoá sản phẩm:', err));
+    setProductToDelete(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (productToDelete === null) {
+      setShowConfirm(false);
+      return;
     }
+      fetch(`http://localhost:3001/api/products/${productToDelete}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+          setProducts(prev => prev.filter(p => p.id !== productToDelete));
+          setNotification({ message: 'Product deleted successfully!', type: 'success' });
+        } else {
+          throw new Error(res.statusText);
+        }
+      })
+        .catch(err => {
+        setNotification({ message: `Delete failed: ${err.message}`, type: 'error' });
+      })
+      .finally(() => {
+        setShowConfirm(false);
+        setProductToDelete(null);
+      });
   };
 
   const handleCategoryChange = (productId: number, newCategoryId: number) => {
@@ -77,14 +105,16 @@ const ProductManagement = () => {
       body: JSON.stringify({ category_id: newCategoryId }),
     })
       .then(res => {
-        if (!res.ok) throw new Error('Lỗi cập nhật danh mục');
+        if (!res.ok) throw new Error('Error updating category');
         setProducts(prev =>
           prev.map(p =>
             p.id === productId ? { ...p, category_id: newCategoryId } : p
           )
         );
       })
-      .catch(err => console.error('Lỗi khi đổi danh mục:', err));
+      .catch(err => {
+        setNotification({ message: `Error changing category: ${err.message}`, type: 'error' });
+      });
   };
 
   const handleEdit = (product: Product) => {
@@ -112,9 +142,11 @@ const ProductManagement = () => {
             prev.map(p => (p.id === updated.id ? updated : p))
           );
           setShowForm(false);
-          setEditingProduct(null);
+          setNotification({ message: 'Product updated successfully!', type: 'success' });
         })
-        .catch(err => console.error('Lỗi khi cập nhật sản phẩm:', err));
+        .catch(err => {
+          setNotification({ message: `Error updating product: ${err.message}`, type: 'error' });
+        });
     } else {
       fetch('http://localhost:3001/api/products', {
         method: 'POST',
@@ -125,8 +157,11 @@ const ProductManagement = () => {
         .then(newProduct => {
           setProducts(prev => [...prev, newProduct]);
           setShowForm(false);
+          setNotification({ message: 'Product added successfully!', type: 'success' });
         })
-        .catch(err => console.error('Lỗi khi thêm sản phẩm:', err));
+        .catch(err => {
+          setNotification({ message: `Error adding product: ${err.message}`, type: 'error' });
+        });
     }
   };
   const totalCount = products.length;
@@ -135,9 +170,26 @@ const ProductManagement = () => {
   const currentProducts = products.slice(start, start + limit);
   return (
     <div className="product-table-container">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        visible={showConfirm}
+        message="Are you sure you want to delete this product?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setShowConfirm(false);
+          setProductToDelete(null);
+        }}
+      />
       {showForm && (
         <div className="form-popup">
-          <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
+          <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
           <label>
             Product Name:
             <input
@@ -174,7 +226,7 @@ const ProductManagement = () => {
               onChange={e =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Mô tả sản phẩm"
+              placeholder="Product description"
             />
           </label>
           <label>
@@ -225,11 +277,11 @@ const ProductManagement = () => {
               {currentProducts.map((p, index) => (
                 <tr key={p.id}>
                   <td style={{ textAlign: 'center' }}>{start + index + 1}</td>
-                  <td>{p.name || 'Không có tên'}</td>
+                  <td>{p.name || 'No Name'}</td>
                   <td>
                     {p.productItems?.[0]?.price
                       ? `${p.productItems[0].price.toLocaleString()}₫`
-                      : 'Không rõ'}
+                      : 'Unknown'}
                   </td>
                   <td>{getCategoryName(p.category_id)}</td>
                   <td>
@@ -239,7 +291,7 @@ const ProductManagement = () => {
                         handleCategoryChange(p.id, Number(e.target.value))
                       }
                     >
-                      <option value="">-- Chọn danh mục --</option>
+                      <option value="">-- Select Category --</option>
                       {categories.map(cat => (
                         <option key={cat.id} value={cat.id}>
                           {cat.name}
