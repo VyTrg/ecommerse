@@ -9,6 +9,8 @@ router.post('/', OrderController.createOrderWithItems);
 
 router.put('/:id', OrderController.updateOrder);
 router.delete('/:id', OrderController.deleteOrder);
+router.put('/:id/status', OrderController.updateOrderStatus);
+ 
 
 
 export default router;

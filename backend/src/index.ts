@@ -23,6 +23,7 @@ import path from "path";
 
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
+import order_itemRoutes from "./routes/order_itemRoutes";
 
 
 dotenv.config();

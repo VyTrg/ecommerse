@@ -15,9 +15,9 @@ export class OrderItem {
   @JoinColumn({ name: 'product_item_id' })
   productItem!: ProductItem; // ✅ sửa từ product_item_id thành productItem
 
-  @Column()
+  @Column({ type: "decimal", precision: 10, scale: 2 })
   quantity!: string;
 
-  @Column()
+  @Column({ type: "decimal", precision: 10, scale: 2 })
   price!: string;
 }

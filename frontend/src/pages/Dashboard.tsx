@@ -15,25 +15,30 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        console.log(sessionStorage.getItem('token'));
-        const [catRes, userRes] = await Promise.all([
+        const [prodRes, catRes, userRes] = await Promise.all([
+          fetch("http://localhost:3001/api/products",{
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+
+          }),
           fetch("http://localhost:3001/api/categories",{
             headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
 
           }),
-          fetch("http://localhost:3001/api/users", {
-            headers:{"Authorization":'Bearer ' +  sessionStorage.getItem('token') || ''}
+          fetch("http://localhost:3001/api/users",{
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
 
           }),
         ]);
 
-        const [catData, userData] = await Promise.all([
+        const [prodData, catData, userData] = await Promise.all([
+          prodRes.json(),
           catRes.json(),
           userRes.json(),
         ]);
 
        setStats(prev => ({
           ...prev,
+          products: prodData.length,
           categories: catData.length,
           users: userData.length,
         }));
@@ -57,20 +62,16 @@ const AdminDashboard: React.FC = () => {
             headers: {"Authorization": `Bearer ${sessionStorage.getItem('token')}`}
           }),
         ]);
-
-        const prodData = await prodRes.json();
+ 
         const orderData = await orderRes.json();
 
         setStats(prev => ({
           ...prev,
-          products: prodData.totalInStock || 0, // nếu backend trả về { totalInStock: ... }
           orders: orderData.totalOrders || 0,
         }));
-
       } catch (err) {
         setStats(prev => ({
           ...prev,
-          products: 0,
           orders: 0,
         }));
         console.error("Failed to load statistics:", err);
@@ -93,7 +94,6 @@ const AdminDashboard: React.FC = () => {
           <option value="day">Day</option>
           <option value="week">Week</option>
           <option value="month">Month</option>
-          <option value="year">Year</option>
         </select>
         <input
           className="dashboard-input"
