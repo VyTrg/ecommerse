@@ -41,7 +41,7 @@ const UserForm: React.FC<Props> = ({ initialData, onSubmit, onCancel }) => {
 
   return (
     <form className="user-form" onSubmit={handleSubmit}>
-      <h3>{initialData ? 'Edit user' : 'Add user'}</h3>
+      {/*<h3>{initialData ? 'Edit user' : 'Add user'}</h3>*/}
 
       <div className="form-group">
         <label>Username</label>

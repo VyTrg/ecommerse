@@ -4,12 +4,10 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/LoginSection.css';
 
-
 const LoginSection: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-
 
   const handleLogin = async () => {
     try {
@@ -26,8 +24,6 @@ const LoginSection: React.FC = () => {
       if (res.ok) {
         sessionStorage.setItem('token', data.accessToken);
         sessionStorage.setItem('userInfo', JSON.stringify(data.user));
-
-        // alert('Login successful');
         navigate('/');
       } else {
         alert(data.message || 'Incorrect username or password');

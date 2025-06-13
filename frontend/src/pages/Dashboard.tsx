@@ -19,9 +19,11 @@ const AdminDashboard: React.FC = () => {
         const [catRes, userRes] = await Promise.all([
           fetch("http://localhost:3001/api/categories",{
             headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+
           }),
           fetch("http://localhost:3001/api/users", {
             headers:{"Authorization":'Bearer ' +  sessionStorage.getItem('token') || ''}
+
           }),
         ]);
 

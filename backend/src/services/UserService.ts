@@ -4,6 +4,7 @@ import {Address} from "../entity/Address"
 import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
 import bcrypt from "bcrypt";
+import {getAdminToken, getKeycloakId} from "../middleware/keycloakToken";
 
 export class UserService {
     private userRepository: Repository<User>;
@@ -79,4 +80,5 @@ export class UserService {
             where: { username: username, hash_password: password },
         });
     }
+
 }

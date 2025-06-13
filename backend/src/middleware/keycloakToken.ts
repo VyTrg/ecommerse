@@ -1,5 +1,8 @@
 import qs from 'qs';
 import dotenv from "dotenv";
+import { Request, Response, NextFunction } from "express";
+import {keycloak} from "./keycloak";
+import {Token} from "keycloak-connect";
 dotenv.config();
 const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID!;
 const REALM = process.env.KEYCLOAK_REALM!;
@@ -126,8 +129,34 @@ export async function getAccessToken(username: string, password: string) {
         }
     );
     const accessToken = await tokenResponse.json();
-    return accessToken['access_token'];
+    return  [accessToken['access_token'], accessToken['refresh_token']];
 
 }
+export async function getKeycloakId(adminToken: string, username: string, password: string) {
+    const userInfoResponse = await fetch(
+        `http://localhost:8080/admin/realms/${REALM}/users`,
+        {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${adminToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    "grant_type": "password",
+                    "username": username,
+                    "client_id": KEYCLOAK_CLIENT_ID,
+                    "password": password,
+                    "client_secret": KEYCLOAK_CLIENT_SECRET,
+                }
+            ),
+        }
+    );
+    const locationHeader = userInfoResponse.headers.get('Location');
+    return locationHeader?.split('/').pop();//return keycloak id
+}
+
+
+
 
 

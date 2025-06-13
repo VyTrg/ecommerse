@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import bcrypt from "bcrypt";
 import {getAccessToken} from "../middleware/keycloakToken";
+import {createCookie} from "react-router";
 
 interface RegisterRequestBody {
   username: string;
@@ -51,9 +52,14 @@ export const login = async (
   const { username, password } = req.body;
 
   try {
-    const accessToken = await getAccessToken(username, password);
-    let isAdmin = false;
+    const [accessToken, refreshToken] = await getAccessToken(username, password);
 
+    let isAdmin = false;
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+    })
     if (accessToken) {
       const decoded = decodeToken(accessToken);
       const roles = decoded?.resource_access?.['express-api']?.roles || [];

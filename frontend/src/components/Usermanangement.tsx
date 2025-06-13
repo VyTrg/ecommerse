@@ -4,7 +4,7 @@ import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
 import '../styles/UserManagement.css';
 import Pagination from '../components/Pagination';
-
+import { FaArrowLeft } from 'react-icons/fa';
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -41,7 +41,9 @@ const UserManagement = () => {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
-        }
+        },
+        credentials: "include",
+        redirect: 'manual'
       })
         .then(res => {
           if (res.ok) {
@@ -60,7 +62,7 @@ const UserManagement = () => {
       fetch(`http://localhost:3001/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
-        body: JSON.stringify(user)
+        body: JSON.stringify(user),
       })
         .then(res => res.json())
         .then(updated => {
@@ -100,20 +102,27 @@ const UserManagement = () => {
   const currentUsers = users.slice(start, start + limit);
   return (
     <div className="user-management-container">
-      <h2 className="user-management-title">User Management</h2>
+      <h2 className="user-management-title">Users</h2>
 
-      {!showForm && (
-        <div className="user-management-action">
-          <button className="btn-add" onClick={handleAdd}>Add User</button>
-        </div>
-      )}
+      {/*{!showForm && (*/}
+      {/*  <div className="user-management-action">*/}
+      {/*    /!*<button className="btn-add" onClick={handleAdd}>Add User</button>*!/*/}
+      {/*  </div>*/}
+      {/*)}*/}
 
       {showForm ? (
-        <UserForm
-          initialData={editingUser || undefined}
-          onSubmit={handleFormSubmit}
-          onCancel={handleCancel}
-        />
+          <>
+            <button onClick={handleCancel} className="back-button">
+              <FaArrowLeft />
+              Back
+            </button>
+
+            <UserForm
+                initialData={editingUser || undefined}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCancel}
+            />
+          </>
       ) : (
         <>
           <UserTable users={currentUsers} onEdit={handleEdit} onDelete={handleDelete} />
