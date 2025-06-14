@@ -9,6 +9,7 @@ import Pagination from "../components/Pagination";
 // Ánh xạ tên danh mục URL sang ID
 const mapCategoryToId = (category: string): number | null => {
   const map: Record<string, number> = {
+    clothing: 1,
     blazer: 4,
     cardigan: 5,
     skirt: 6,
@@ -21,7 +22,7 @@ const mapCategoryToId = (category: string): number | null => {
 };
 
 // Danh sách các danh mục con của Clothing (parentId = 1)
-const clothingSubcategoryIds = [4, 5, 6, 7, 8, 11, 13];
+const clothingSubcategoryIds = [1,4, 5, 6, 7, 8, 11, 13];
 
 
 const ClothingPage: React.FC = () => {
@@ -95,7 +96,7 @@ const ClothingPage: React.FC = () => {
               <FilteredProductList
                 filters={filters}
                 parentCategoryId={1}
-                allowedSubcategoryIds={[4, 5, 6, 7, 8, 11]}
+                allowedSubcategoryIds={[1,4, 5, 6, 7, 8, 11]}
                 page={page}
                 limit={limit}
                 onTotalCountChange={setTotalCount}

@@ -19,8 +19,8 @@ import Order_itemRoutes from "./routes/order_itemRoutes";
 import session from 'express-session';
 
 import path from "path";
-
-
+import invoice from "./routes/invoice";
+import adminOrderRoutes from "./routes/adminOrderRoutes";
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
 import order_itemRoutes from "./routes/order_itemRoutes";
@@ -58,17 +58,18 @@ app.use("/api/orders",orderRoutes);
 app.use("/api/statistics",keycloak.protect(adminOnly), StatisticsRoutes);
 
 app.use("/api/auth", authRoutes);
-app.use("/api/order_items", keycloak.protect(isAuthenticated),Order_itemRoutes);
-
+app.use("/api/order_items",Order_itemRoutes);
+app.use('/admin/api/orders', adminOrderRoutes);
 // Serve static files from the uploads directory
-app.use("/uploads", keycloak.protect(adminOnly),express.static(path.join(__dirname, "../uploads")));
-
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// app.use("/api/upload", uploadRoute);
+app.use("/api/invoice", invoice);
 // DB + start server
 AppDataSource.initialize()
     .then(() => {
-        console.log("Database connected successfully");
+        console.log(" Database connected successfully");
         app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
+            console.log(` Server running at http://localhost:${PORT}`);
         });
     })
-    .catch((error) => console.log("Database connection error:", error))
+    .catch((error) => console.log("Database connection error:", error));

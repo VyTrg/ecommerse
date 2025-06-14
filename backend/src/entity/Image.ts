@@ -14,10 +14,8 @@ export class Image {
   @Column()
   image_url!: string;
 
-
-
   @ManyToOne(() => ProductItem, (productItem) => productItem.images, {
-    onDelete: 'NO ACTION',
+    onDelete: 'CASCADE',  
     nullable: true,
   })
   productItem?: ProductItem;

@@ -23,109 +23,92 @@ export class ProductItemService {
 
   async getAllProductItems(): Promise<ProductItem[]> {
     return this.productItemRepository.find({
-      relations: ["product", "size", "color", "images"], // ✅ sửa image → images
+      relations: ["product", "size", "color", "images"],
     });
   }
 
   async getProductItemById(id: number): Promise<ProductItem | null> {
     return this.productItemRepository.findOne({
       where: { id },
-      relations: ["product", "size", "color", "images"], // ✅ sửa image → images
+      relations: ["product", "size", "color", "images"],
     });
   }
 
   async getProductItemsByProductId(productId: number): Promise<ProductItem[]> {
     return this.productItemRepository.find({
       where: { product: { id: productId } },
-      relations: ["product", "size", "color", "images"], // ✅ sửa image → images
+      relations: ["product", "size", "color", "images"],
     });
   }
 
-  async createProductItem(data: Partial<ProductItem>): Promise<ProductItem> {
-    const product = await this.productRepository.findOne({
-      where: { id: data.product?.id },
-    });
+  async createProductItem(data: {
+    product_id: number;
+    price: number;
+    quantity: number;
+    size_id?: number;
+    color_id?: number;
+    images: { image_url: string }[];
+  }): Promise<ProductItem> {
+    const product = await this.productRepository.findOne({ where: { id: data.product_id } });
     if (!product) throw new Error("Product not found");
 
-    let size: Size | undefined;
-    if (data.size?.id) {
-      const foundSize = await this.sizeRepository.findOne({
-        where: { id: data.size.id },
-      });
-      if (!foundSize) throw new Error("Size not found");
-      size = foundSize;
+    let size: Size | null = null;
+    if (data.size_id) {
+      size = await this.sizeRepository.findOne({ where: { id: data.size_id } });
+      if (!size) throw new Error("Size not found");
     }
 
-    let color: Color | undefined;
-    if (data.color?.id) {
-      const foundColor = await this.colorRepository.findOne({
-        where: { id: data.color.id },
-      });
-      if (!foundColor) throw new Error("Color not found");
-      color = foundColor;
-    }
-
-    // Nếu bạn muốn gán images trong quá trình tạo (mảng các ID):
-    let images: Image[] = [];
-    if (data.images?.length) {
-      const imageIds = data.images.map((img) => img.id);
-      images = await this.imageRepository.findByIds(imageIds);
+    let color: Color | null = null;
+    if (data.color_id) {
+      color = await this.colorRepository.findOne({ where: { id: data.color_id } });
+      if (!color) throw new Error("Color not found");
     }
 
     const productItem = new ProductItem();
     productItem.product = product;
-    if (size) productItem.size = size;
-    if (color) productItem.color = color;
-    productItem.images = images; 
-    productItem.quantity = data.quantity || 0;
-    productItem.price = data.price || "0.00";
+    productItem.size = size;
+    productItem.color = color;
+    productItem.quantity = data.quantity;
+    productItem.price = data.price;
+    productItem.images = this.mapImages(data.images);
 
-    return this.productItemRepository.save(productItem);
+    return await this.productItemRepository.save(productItem);
   }
 
-  async updateProductItem(id: number, data: Partial<ProductItem>): Promise<ProductItem | null> {
+  async updateProductItem(id: number, data: {
+    price?: number;
+    quantity?: number;
+    images?: { image_url: string }[];
+  }): Promise<ProductItem | null> {
     const productItem = await this.productItemRepository.findOne({
       where: { id },
-      relations: ["product", "size", "color", "images"], 
+      relations: ["images"],
     });
 
     if (!productItem) return null;
 
-    if (data.product?.id) {
-      const product = await this.productRepository.findOne({
-        where: { id: data.product.id },
-      });
-      if (product) productItem.product = product;
-    }
-
-    if (data.size?.id) {
-      const size = await this.sizeRepository.findOne({
-        where: { id: data.size.id },
-      });
-      if (size) productItem.size = size;
-    }
-
-    if (data.color?.id) {
-      const color = await this.colorRepository.findOne({
-        where: { id: data.color.id },
-      });
-      if (color) productItem.color = color;
-    }
-
-    if (data.images?.length) {
-      const imageIds = data.images.map((img) => img.id);
-      const foundImages = await this.imageRepository.findByIds(imageIds);
-      productItem.images = foundImages;
-    }
-
-    if (data.quantity !== undefined) productItem.quantity = data.quantity;
     if (data.price !== undefined) productItem.price = data.price;
+    if (data.quantity !== undefined) productItem.quantity = data.quantity;
 
-    return this.productItemRepository.save(productItem);
+    if (data.images !== undefined) {
+      // Khi client truyền mảng rỗng thì cũng xóa sạch ảnh
+      await this.imageRepository.delete({ productItem: { id } });
+      productItem.images = this.mapImages(data.images);
+    }
+
+    return await this.productItemRepository.save(productItem);
   }
 
   async deleteProductItem(id: number): Promise<boolean> {
     const result = await this.productItemRepository.delete(id);
     return result.affected !== 0;
+  }
+
+  private mapImages(images: { image_url: string }[]): Image[] {
+    return images.map(img => {
+      const image = new Image();
+      image.image_url = img.image_url;
+      return image;
+    });
   }
 }

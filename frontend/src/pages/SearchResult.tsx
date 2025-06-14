@@ -4,9 +4,9 @@ import "../styles/SearchResult.css";
 
 interface ProductItem {
   price: number;
-  image: {
+  images: {
     image_url: string;
-  };
+  }[];
 }
 
 interface Product {
@@ -63,7 +63,8 @@ const SearchResult = () => {
             <div className="product-grid">
               {products.map((product) => {
                 const firstItem = product.productItems?.[0];
-                const imageUrl = firstItem?.image?.image_url?.trim() || "/default.jpg";
+                const firstImage = firstItem?.images?.[0];
+                const imageUrl = firstImage?.image_url?.trim() || "/default.jpg";
                 const price = firstItem?.price;
 
                 return (

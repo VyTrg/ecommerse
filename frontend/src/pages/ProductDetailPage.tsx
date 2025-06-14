@@ -112,7 +112,7 @@ const ProductDetail: React.FC = () => {
 
         <div className="product-details">
           <div className="breadcrumb">
-            <Link to="/">Home</Link> / <Link to="/shop">Shop</Link> / Product #{item.id}
+            <Link to="/">Home</Link> 
           </div>
           <h1>{product.name}</h1>
           <p className="price">{item.price.toLocaleString()}₫</p>

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import "../styles/CheckoutPage.css";
+import InvoiceButton from "../components/InvoiceButton";
 
 const currentUser = JSON.parse(sessionStorage.getItem("currentUser") || "null");
+
 
 const CheckoutPage: React.FC = () => {
   const { cart, updateQuantity, removeItem, clearCart } = useCart();
@@ -23,70 +25,97 @@ const CheckoutPage: React.FC = () => {
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
+const handlePlaceOrder = async () => {
+  const isGuest = !currentUser;
 
-  const handlePlaceOrder = async () => {
-    const isGuest = !currentUser;
+  if (
+    isGuest &&
+    (!formData.guest_name.trim() ||
+      !formData.guest_email.trim() ||
+      !formData.guest_phone.trim() ||
+      !formData.street_name.trim() ||
+      !formData.city.trim() ||
+      !formData.region.trim() ||
+      !formData.district.trim())
+  ) {
+    alert("Vui lòng điền đầy đủ thông tin giao hàng.");
+    return;
+  }
 
-    if (
-      isGuest &&
-      (!formData.guest_name.trim() ||
-        !formData.guest_email.trim() ||
-        !formData.guest_phone.trim() ||
-        !formData.street_name.trim() ||
-        !formData.city.trim() ||
-        !formData.region.trim() ||
-        !formData.district.trim())
-    ) {
-      alert("Vui lòng điền đầy đủ thông tin giao hàng.");
-      return;
-    }
+  const payload: any = {
+    
+    order_total: total.toFixed(2),
+    shipping_method_id: 1,
+    order_status_id: 1,
+    order_items: cart.map((item) => ({
+      product_item_id: item.id,
+      quantity: item.quantity.toString(),
+      price: item.price.toFixed(2),
+    })),
+  };
 
-    const payload: any = {
-      order_total: total.toFixed(2),
-      shipping_method_id: 1,
-      order_status_id: 1,
-      order_items: cart.map((item) => ({
-        product_item_id: item.id,
-        quantity: item.quantity.toString(),
-        price: item.price.toFixed(2),
+  if (currentUser) {
+    payload.user_id = currentUser.id;
+    payload.shipping_address_id = 3;
+  } else {
+    payload.guest_info = {
+      guest_name: formData.guest_name,
+      guest_email: formData.guest_email,
+      guest_phone: formData.guest_phone,
+      street_name: formData.street_name,
+      city: formData.city,
+      region: formData.region,
+      district: formData.district,
+      country: formData.country,
+    };
+  }
+
+  try {
+    const res = await fetch("http://localhost:3001/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error("Đặt hàng thất bại");
+
+    alert("Đặt hàng thành công!");
+const createdOrder = await res.json();
+    
+    const orderForPdf = {
+      customerName: isGuest ? formData.guest_name : currentUser.name,
+      orderId: "ORD-" + createdOrder.id,
+      total: total,
+      items: cart.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
       })),
     };
 
-    if (currentUser) {
-      payload.user_id = currentUser.id;
-      payload.shipping_address_id = 3; // giả định có sẵn
-    } else {
-      payload.guest_info = {
-        guest_name: formData.guest_name,
-        guest_email: formData.guest_email,
-        guest_phone: formData.guest_phone,
-        street_name: formData.street_name,
-        city: formData.city,
-        region: formData.region,
-        district: formData.district,
-        country: formData.country,
-      };
-    }
+    
+    const invoiceRes = await fetch("http://localhost:3001/api/invoice/generate-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderData: orderForPdf }),
+    });
 
-    try {
-      const res = await fetch("http://localhost:3001/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    if (!invoiceRes.ok) throw new Error("Lỗi tạo hóa đơn");
 
-      if (!res.ok) throw new Error("Order failed");
+    const blob = await invoiceRes.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url);
 
-      alert("✅ Đặt hàng thành công!");
-      clearCart();
-    } catch (err) {
-      alert("❌ Đặt hàng thất bại. Vui lòng thử lại.");
-      console.error(err);
-    }
-  };
+    clearCart(); 
+
+  } catch (err) {
+    alert(" Tạo hóa đơn không thành công.");
+    console.error(err);
+  }
+};
+
 
   return (
     <div className="checkout-page">
@@ -192,6 +221,7 @@ const CheckoutPage: React.FC = () => {
           <button className="place-order-btn" onClick={handlePlaceOrder}>
             Order
           </button>
+         
         </>
       )}
     </div>

@@ -60,7 +60,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
           <ul className="nav_link">
             <li className="drop-down-menu">
               <Link to="/clothing">CLOTHING</Link>
-              <ul className="drop-down">
+              {/*<ul className="drop-down">*/}
               <ul className="drop-down">
                 <li><Link to="/clothing/blazer">Blazers</Link></li>
                 <li><Link to="/clothing/bodysuit">Bodysuits</Link></li>
@@ -75,7 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
                 <li><Link to="/clothing/skirt">Skirts</Link></li>
                 <li><Link to="/clothing/top">Tops</Link></li>
                 </ul>
-              </ul>
+              {/*</ul>*/}
             </li>
             <li className="drop-down-menu">
               <Link to="/swimwear">SWIMWEAR</Link>

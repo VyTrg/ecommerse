@@ -1,180 +1,218 @@
-import React, { useEffect, useState } from "react";
-import "../styles/CategoryAdminPage.css";
+import React, { JSX, useEffect, useState } from "react";
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  all_rate: number;
+  category_id: number;
+};
 
 type Category = {
   id: number;
   name: string;
-  parent?: {
-    id: number;
-    name: string;
-  } | null;
+  products: Product[];
+  parent?: { id: number; name: string } | null;
+  children?: Category[];
 };
 
 const CategoryAdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [flatCategories, setFlatCategories] = useState<Category[]>([]);
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
   const [newName, setNewName] = useState("");
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+  const [selectedParent, setSelectedParent] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
 
-  // Lấy danh sách danh mục
   useEffect(() => {
     fetch("http://localhost:3001/api/categories")
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error("Lỗi tải danh mục:", err));
+      .then((res) => res.json())
+      .then((data: Category[]) => {
+        setFlatCategories(data);
+        setCategories(buildTree(data));
+      });
   }, []);
 
-  // Bắt đầu sửa
-  const handleEditClick = (category: Category) => {
-    setEditingCategory(category);
-    setNewName(category.name);
+  const buildTree = (flatList: Category[]): Category[] => {
+    const idMap: { [key: number]: Category & { children: Category[] } } = {};
+    const roots: Category[] = [];
+
+    flatList.forEach((cat) => {
+      idMap[cat.id] = { ...cat, children: [] };
+    });
+
+    flatList.forEach((cat) => {
+      const parentId = cat.parent?.id ?? null;
+      if (parentId) {
+        idMap[parentId].children.push(idMap[cat.id]);
+      } else {
+        roots.push(idMap[cat.id]);
+      }
+    });
+
+    return roots;
   };
 
-  // Gửi PUT cập nhật danh mục
-  const handleUpdate = () => {
-    if (!editingCategory) return;
-
-    fetch(`http://localhost:3001/api/categories/${editingCategory.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Cập nhật thất bại");
-        return res.json();
-      })
-      .then(updated => {
-        setCategories(prev =>
-          prev.map(cat => (cat.id === updated.id ? updated : cat))
-        );
-        setEditingCategory(null);
-        alert("✔ Cập nhật thành công");
-      })
-      .catch(err => alert("❌ Lỗi cập nhật: " + err.message));
+  const handleToggleExpand = (id: number) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
-  // Gửi POST thêm danh mục
   const handleAdd = () => {
-    if (!newCategoryName.trim()) {
-      alert("❗ Vui lòng nhập tên danh mục");
+    if (!newName.trim()) {
+      alert("Vui lòng nhập tên");
       return;
     }
-
     fetch("http://localhost:3001/api/categories/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCategoryName, parent_id: selectedParentId }),
-    })
-      .then(async res => {
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`(${res.status}) ${errText}`);
-        }
-        return res.json();
-      })
-      .then((created: Category) => {
-        setCategories(prev => [...prev, created]);
-        setNewCategoryName("");
-        setSelectedParentId(null);
-        alert("✔ Thêm thành công");
-      })
-      .catch(err => alert("❌ Lỗi thêm: " + err.message));
+      body: JSON.stringify({ name: newName, parent_id: selectedParent }),
+    }).then(() => window.location.reload());
   };
 
-  // Gửi DELETE xóa danh mục
-  const handleDelete = (id: number) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa?")) return;
+  const handleEdit = (id: number, name: string) => {
+    setEditingId(id);
+    setEditingName(name);
+  };
 
-    fetch(`http://localhost:3001/api/categories/${id}/delete`, {
-      method: "DELETE",
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Xóa thất bại");
-        setCategories(prev => prev.filter(cat => cat.id !== id));
-        alert("🗑️ Xóa thành công");
-      })
-      .catch(err => alert("❌ Lỗi xóa: " + err.message));
+  const handleUpdate = () => {
+    fetch(`http://localhost:3001/api/categories/${editingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+      body: JSON.stringify({ name: editingName }),
+    }).then(() => window.location.reload());
+  };
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Bạn có chắc chắn xoá?")) {
+      fetch(`http://localhost:3001/api/categories/${id}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+      }).then(() => window.location.reload());
+    }
+  };
+
+  const renderFlatList = (list: Category[], level = 0): JSX.Element[] => {
+    let items: JSX.Element[] = [];
+
+    list.forEach((cat) => {
+      items.push(
+        <div
+          key={cat.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "10px 12px",
+            borderBottom: "1px solid #eee",
+            paddingLeft: `${level * 20}px`,
+            background: "#fff",
+          }}
+        >
+          {cat.children && cat.children.length > 0 ? (
+            <span
+              style={{
+                cursor: "pointer",
+                fontWeight: "bold",
+                width: "20px",
+                textAlign: "center",
+                padding: "20px",
+              }}
+              onClick={() => handleToggleExpand(cat.id)}
+            >
+              {expandedIds.includes(cat.id) ? "▼" : "▶"}
+            </span>
+          ) : (
+            <span style={{ width: "20px",padding:"20px"}}></span>
+          )}
+
+          {editingId === cat.id ? (
+            <>
+              <input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                style={{ flex: 1, padding: "4px" }}
+              />
+              <button onClick={handleUpdate}>💾</button>
+              <button onClick={() => setEditingId(null)}>❌</button>
+            </>
+          ) : (
+            <>
+              <span style={{ flex: 1 }}>{cat.name}</span>
+              <button onClick={() => handleEdit(cat.id, cat.name)}>✏️ Sửa</button>
+              <button onClick={() => handleDelete(cat.id)}>🗑️ Xoá</button>
+            </>
+          )}
+        </div>
+      );
+
+      if (expandedIds.includes(cat.id) && cat.children && cat.children.length > 0) {
+        items = items.concat(renderFlatList(cat.children, level + 1));
+      }
+    });
+
+    return items;
   };
 
   return (
-    <div className="product-table-container">
-      <h2 className="product-table-title">Quản lý danh mục</h2>
+    <div
+      style={{
+        padding: "30px",
+        color: "#333",
+        fontFamily: "Arial, sans-serif",
+        maxWidth: "800px",
+        margin: "auto",
+      }}
+    >
+      <h2 style={{ textAlign: "center",padding:"20px", }}>🗂️ Quản lý danh mục</h2>
 
-      <div className="add-category-form">
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
         <input
           type="text"
-          placeholder="Tên danh mục mới"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
+          placeholder="Tên danh mục"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          style={{ padding: "8px", flex: "1 1 200px" }}
         />
         <select
-          value={selectedParentId ?? ""}
+          value={selectedParent ?? ""}
           onChange={(e) =>
-            setSelectedParentId(e.target.value ? parseInt(e.target.value) : null)
+            setSelectedParent(e.target.value ? parseInt(e.target.value) : null)
           }
+          style={{ padding: "8px", flex: "1 1 200px" }}
         >
-          <option value="">-- Không có danh mục cha --</option>
-          {categories.map((cat) => (
+          <option value="">Không có danh mục cha</option>
+          {flatCategories.filter(cat => cat.parent == null).map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>
           ))}
         </select>
-        <button className="btn-add" onClick={handleAdd}>
-          ➕ Thêm danh mục
+        <button onClick={handleAdd} style={{ padding: "8px 16px" }}>
+          ➕ Thêm
         </button>
       </div>
 
-      <table className="product-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Tên danh mục</th>
-            <th>Danh mục cha</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((cat) => (
-            <tr key={cat.id}>
-              <td>{cat.id}</td>
-              <td>
-                {editingCategory?.id === cat.id ? (
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                ) : (
-                  cat.name
-                )}
-              </td>
-              <td>{cat.parent ? cat.parent.name : "(Không có)"}</td>
-              <td>
-                {editingCategory?.id === cat.id ? (
-                  <>
-                    <button className="btn-edit" onClick={handleUpdate}>
-                      💾 Lưu
-                    </button>
-                    <button className="btn-cancel" onClick={() => setEditingCategory(null)}>
-                      ❌ Hủy
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="btn-edit" onClick={() => handleEditClick(cat)}>
-                      ✏️ Sửa
-                    </button>
-                    <button className="btn-delete" onClick={() => handleDelete(cat.id)}>
-                      🗑️ Xóa
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: "6px",
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        }}
+      >
+        {renderFlatList(categories)}
+      </div>
     </div>
   );
 };
