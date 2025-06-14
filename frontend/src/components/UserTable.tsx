@@ -1,4 +1,3 @@
-// src/components/UserTable.tsx
 import React from 'react';
 import '../styles/UserTable.css';
 import { User } from '../types/User';

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/OrderManagement.css';
-
-
-// Import ConfirmDialog và Notification
 import ConfirmDialog from '../components/ConfirmDialog';
 import Notification from '../components/Notification';
+import Pagination from '../components/Pagination';
 
 type Order = {
   id: number;
@@ -25,6 +23,8 @@ type Order = {
 
 const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [page, setPage] = useState(1);
+  const limit = 8;
   const navigate = useNavigate();
 
   // State cho Notification (toast)
@@ -33,16 +33,16 @@ const OrderManagement: React.FC = () => {
     type: 'success' | 'error';
   } | null>(null);
 
-  // State cho ConfirmDialog (modal xác nhận)
+
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
 
-  // 1. Lấy danh sách orders khi mount
   useEffect(() => {
     fetch('http://localhost:3001/api/orders')
       .then(res => res.json())
-      .then((data: Order[]) => {
-        setOrders(data);
+      .then(data=> {
+        const orderList = Array.isArray(data) ? data : data?.data;
+        setOrders(Array.isArray(orderList) ? orderList : []);
       })
       .catch(err => {
         console.error('Error loading orders:', err);
@@ -50,13 +50,11 @@ const OrderManagement: React.FC = () => {
       });
   }, []);
 
-  // 2. Khi user click Delete: chỉ set orderToDelete và bật ConfirmDialog
   const handleDeleteClick = (id: number) => {
     setOrderToDelete(id);
     setShowConfirm(true);
   };
 
-  // 3. Nếu user bấm "Yes" trong ConfirmDialog → thực sự delete
   const handleConfirmDelete = () => {
     if (orderToDelete === null) {
       setShowConfirm(false);
@@ -83,18 +81,15 @@ const OrderManagement: React.FC = () => {
       });
   };
 
-  // 4. Nếu user bấm "No" → ẩn ConfirmDialog
   const handleCancelDelete = () => {
     setShowConfirm(false);
     setOrderToDelete(null);
   };
 
-  // 5. Điều hướng tới trang Detail
   const goToDetail = (id: number) => {
     navigate(`/admin/orders/${id}`);
   };
 
-  // 6. Cập nhật trạng thái đơn hàng (giữ nguyên logic trước)
   const updateOrderStatus = (orderId: number, newStatus: string) => {
     fetch(`http://localhost:3001/api/orders/${orderId}/status`, {
       method: 'PUT',
@@ -144,6 +139,10 @@ const OrderManagement: React.FC = () => {
     navigate(`/admin/orders/${id}`);
   };
 
+  const totalPages = Math.ceil(orders.length / limit);
+  const startIndex = (page - 1) * limit;
+  const currentOrders = orders.slice(startIndex, startIndex + limit);
+
   return (
     <div className="order-container">
       {/* Render Notification nếu có */}
@@ -166,7 +165,7 @@ const OrderManagement: React.FC = () => {
       <table className="order-table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>No.</th>
             <th>Customer</th>
             <th>Total Amount</th>
             <th>Status</th>
@@ -175,10 +174,10 @@ const OrderManagement: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {orders.map(order => (
+          {orders.map((order, index) => (
             <tr key={order.id}>
-              <td>{order.id}</td>
-              <td>{order.user.username}</td>
+              <td>{index + 1}</td>
+              <td>{order.user?.username ?? 'Unknown'}</td>
               <td>{order.order_total.toLocaleString()}₫</td>
               <td>
                 <select
@@ -210,23 +209,14 @@ const OrderManagement: React.FC = () => {
         </tbody>
       </table>
 
-      {/* {totalPages > 1 && (
+     {totalPages > 1 && (
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-            <button key={pageNumber}
-              style={{
-                margin: 4, padding: '8px 12px',
-                backgroundColor: pageNumber === page ? '#333' : '#eee',
-                color: pageNumber === page ? '#fff' : '#000',
-                border: 'none', borderRadius: 4, cursor: 'pointer',
-              }}
-              onClick={() => setPage(pageNumber)}>{pageNumber}
-            </button>
-          ))}
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
-      )} */}
+      )}
     </div>
   );
 };
+
 
 export default OrderManagement;

@@ -4,6 +4,7 @@ import EditForm from "../components/EditForm";
 import SearchBar from "../components/SearchBar";
 import "../styles/product.css";
 import Notification from "../components/Notification";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const Products = () => {
   const [data, setData] = useState([
@@ -20,7 +21,8 @@ const Products = () => {
     message: string;
     type: "success" | "error";
   } | null>(null);
-
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 3000);
@@ -58,16 +60,23 @@ const Products = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      const newData = data.filter((item) => item.id !== id);
+    setItemToDelete(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmResult = (confirm) => {
+    if (confirm && itemToDelete !== null) {
+      const newData = data.filter((item) => item.id !== itemToDelete);
       setData(newData);
       setFilteredData(newData);
     }
+    setItemToDelete(null);
+    setShowConfirm(false);
   };
 
   const handleBuy = (item) => {
     setNotification({
-      message: `Bạn đã chọn mua: ${item.name} với giá ${item.value.toLocaleString()}₫`,
+      message: `You chose to buy: ${item.name} for ${item.value.toLocaleString()}₫`,
       type: "success",
     });
     // TODO: Thêm logic giỏ hàng ở đây
@@ -113,6 +122,14 @@ const Products = () => {
           onClose={() => setNotification(null)}
         />
       )}
+
+      <ConfirmDialog
+        visible={showConfirm}
+        message="Are you sure you want to delete this product?"
+        onConfirm={() => handleConfirmResult(true)}
+        onCancel={() => handleConfirmResult(false)}
+      />
+
     <div className="products-container">
       <div className="products-header">
         <h1 className="title">Products</h1>

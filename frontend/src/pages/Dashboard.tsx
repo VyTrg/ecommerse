@@ -27,12 +27,17 @@ const AdminDashboard: React.FC = () => {
           userRes.json(),
         ]);
 
-       setStats(prev => ({
-          ...prev,
-          products: prodData.length,
-          categories: catData.length,
-          users: userData.length,
-        }));
+      const productList = Array.isArray(prodData) ? prodData : prodData.products ?? prodData.data ?? [];
+      const categoryList = Array.isArray(catData) ? catData : catData.categories ?? catData.data ?? [];
+      const userList = Array.isArray(userData) ? userData : userData.users ?? userData.data ?? [];
+
+      setStats(prev => ({
+      ...prev,
+      products: productList.length,
+      categories: categoryList.length,
+      users: userList.length,
+    }));
+
       } catch (err) {
         console.error("Failed to load statistics:", err);
       }

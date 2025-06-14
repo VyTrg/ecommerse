@@ -36,7 +36,7 @@ type FormDataType = {
 
 const ProductManagement = () => {
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = 8;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -58,26 +58,20 @@ const ProductManagement = () => {
   useEffect(() => {
     fetch('http://localhost:3001/api/products')
       .then(res => res.json())
-      .then(data => setProducts(data))
+      .then(data => {
+        const productList = Array.isArray(data) ? data : data?.data;
+        setProducts(Array.isArray(productList) ? productList : []);
+      })
       .catch(err => {
         setNotification({ message: `Error loading products: ${err.message}`, type: 'error' });
       });
 
     fetch('http://localhost:3001/api/categories')
-      .then(res => {
-        if (!res.ok) throw new Error('Error loading categories');
-        return res.json();
-      })
-      .then(data => setCategories(data))
-      .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
-  }, []);
-
-  // Removed useEffect for loadProducts as products are fetched above and paginated locally
-
-  useEffect(() => {
-    fetch('http://localhost:3001/api/categories')
       .then(res => res.json())
-      .then(data => setCategories(data))
+      .then(data => {
+        const catList = Array.isArray(data) ? data : data?.categories;
+        setCategories(Array.isArray(catList) ? catList : []);
+      })
       .catch(err => {
         setNotification({ message: `Error loading categories: ${err.message}`, type: 'error' });
       });
@@ -183,10 +177,10 @@ const ProductManagement = () => {
         });
     }
   };
-  const totalCount = products.length;
+  const totalCount = Array.isArray(products) ? products.length : 0;
   const totalPages = Math.ceil(totalCount / limit);
   const start = (page - 1) * limit;
-  const currentProducts = products.slice(start, start + limit);
+  const currentProducts = Array.isArray(products) ? products.slice(start, start + limit) : [];
   return (
     <div className="product-table-container">
       {notification && (
@@ -370,6 +364,7 @@ const ProductManagement = () => {
       )}
     </div>
   );
+  
 };
 
 export default ProductManagement;

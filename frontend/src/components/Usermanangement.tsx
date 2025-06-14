@@ -21,7 +21,10 @@ const UserManagement = () => {
   useEffect(() => {
     fetch('http://localhost:3001/api/users')
       .then(res => res.json())
-      .then(data => setUsers(data))
+      .then(data => {
+      const userList = Array.isArray(data) ? data : data?.data;
+      setUsers(Array.isArray(userList) ? userList : []);
+      })
       .catch(err => {
         setNotification({ message: `Error loading users: ${err.message}`, type: 'error' });
       });
@@ -65,7 +68,7 @@ const UserManagement = () => {
           setShowConfirm(false);
           setUserToDelete(null);
          });
-  } // <-- Add this closing brace for handleConfirmDelete
+  } 
 
   const handleFormSubmit = (user: UserInput | User) => {
     if ('id' in user) {
@@ -95,7 +98,7 @@ const UserManagement = () => {
         })
         .then(newUser => {
           // API trả về dạng: { status: "success", user: {...} }
-          setUsers(prev => [...prev, newUser.user]); // ✅ Dùng newUser.user
+          setUsers(prev => [...prev, newUser.user]); //  Dùng newUser.user
           setShowForm(false);
           setNotification({ message: 'User created successfully!', type: 'success' });
         })
@@ -108,10 +111,10 @@ const UserManagement = () => {
   const handleCancel = () => {
     setShowForm(false);
   };
-  const totalCount = users.length;
+  const totalCount = Array.isArray(users) ? users.length : 0;
   const totalPages = Math.ceil(totalCount / limit);
   const start = (page - 1) * limit;
-  const currentUsers = users.slice(start, start + limit);
+   const currentUsers = Array.isArray(users) ? users.slice(start, start + limit) : [];
   return (
     <div className="user-management-container">
       <h2 className="user-management-title">User Management</h2>

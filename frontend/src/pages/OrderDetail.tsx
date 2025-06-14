@@ -78,9 +78,9 @@ const OrderDetailPage: React.FC = () => {
       <h1>Order Details #{order.id}</h1>
       <section className="customer-info">
         <h2>Customer Info</h2>
-        <p>Username: {order.user.username}</p>
-        <p>Email: {order.user.email}</p>
-        <p>Phone: {order.user.phone}</p>
+        <p>Username: {order.user?.username ?? 'Unknown'}</p>
+        <p>Email: {order.user?.email ?? 'Unknown'}</p>
+        <p>Phone: {order.user?.phone ?? 'Unknown'}</p>
       </section>
 
       <section className="shipping-info">
