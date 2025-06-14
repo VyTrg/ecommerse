@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import React from "react";
 import "../styles/CategoryPage.css";
 import { useCart } from "../contexts/CartContext"; 
-
+import Notification from "../components/Notification";
 type Product = {
   id: number;
   name: string;
@@ -21,7 +21,10 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
 
   const { addToCart } = useCart();
-
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   useEffect(() => {
     if (categoryName) {
       setLoading(true);
@@ -37,6 +40,14 @@ export default function CategoryPage() {
   }, [categoryName]);
 
   return (
+    <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     <div style={{ padding: "20px" }}>
       <h1 style={{ fontSize: "28px", fontWeight: "bold", textTransform: "uppercase" }}>
         {categoryName}
@@ -70,7 +81,7 @@ export default function CategoryPage() {
                           price: item.price,
                           image: item.image.image_url,
                         });
-                        alert("Item added to cart!");
+                        setNotification({ message: 'Item added to cart!', type: 'success' });
                       }
                     }}
                   >
@@ -83,5 +94,6 @@ export default function CategoryPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

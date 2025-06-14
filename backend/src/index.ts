@@ -16,12 +16,19 @@ import product_itemRoutes from "./routes/productItemRoutes";
 import authRoutes from "./routes/authRoutes";
 import StatisticsRoutes from "./routes/StatisticsRoutes";
 
-import path from "path";
+import Order_itemRoutes from "./routes/order_itemRoutes";
+import adminOrderRoutes from "./routes/adminOrderRoutes";
+import uploadRoute from "./routes/uploadRoute";
 
+import path from "path";
+import invoice from "./routes/invoice";
 
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
+
 import order_itemRoutes from "./routes/order_itemRoutes";
+
+import { Order_item } from "./entity/Order_item";
 
 dotenv.config();
 const app = express();
@@ -47,17 +54,23 @@ app.use("/api/images", imageRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/auth", authRoutes);
+
 app.use("/api/statistics", StatisticsRoutes);
 app.use("/api/order-items", order_itemRoutes);
 
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/api/order_items",Order_itemRoutes);
+app.use('/admin/api/orders', orderRoutes);
+// Serve static files from the uploads directory
 
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/api/upload", uploadRoute);
+app.use("/api/invoice", invoice);
 // DB + start server
 AppDataSource.initialize()
     .then(() => {
-        console.log("✅ Database connected successfully");
+        console.log(" Database connected successfully");
         app.listen(PORT, () => {
-            console.log(`🚀 Server running at http://localhost:${PORT}`);
+            console.log(` Server running at http://localhost:${PORT}`);
         });
     })
-    .catch((error) => console.log("❌ Database connection error:", error));
+    .catch((error) => console.log("Database connection error:", error));

@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import "../styles/ProductDetail.css";
-import { useCart } from "../contexts/CartContext"; // ✅ Thêm
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import '../styles/ProductDetail.css';
+import { useCart } from '../contexts/CartContext';
+import ConfirmDialog from '../components/ConfirmDialog';
+import Notification from '../components/Notification';
 
 type ProductItem = {
   id: number;
   price: number;
   quantity: number;
   size: string | null;
-  image: { image_url: string };
+  images: {image_url: string }[];
   color: { name: string; color_code: string };
   product: {
     id: number;
@@ -31,11 +33,16 @@ type Product = {
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart(); // ✅ Dùng context
-
+  const [notification, setNotification] = useState<{
+      message: string;
+      type: 'success' | 'error';
+    } | null>(null);
+  const { addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('description');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -58,60 +65,69 @@ const ProductDetail: React.FC = () => {
               productItems: [item],
             };
             setProduct(fullProduct);
-            setSelectedImage(item.image.image_url || "");
+            setLoading(false);
           });
       })
-      .catch(() => setProduct(null));
+      .catch((err) => {
+        console.error('❌ Error loading product:', err);
+        setLoading(false);
+      });
   }, [id]);
 
-  if (!product || !product.productItems || product.productItems.length === 0) {
-    return (
-      <div className="text-center py-20 text-gray-500 text-xl">
-        Product not found or has no variations.
-      </div>
-    );
-  }
+  if (loading) return <p>Loading...</p>;
+  if (!product || product.productItems.length === 0) return <p>No product found.</p>;
 
   const item = product.productItems[0];
+  const imageUrl = (img: any) => img?.image_url || '/fallback.jpg';
 
   const handleAddToCart = () => {
     addToCart({
       id: item.id,
       name: product.name,
       price: item.price,
-      image: item.image.image_url,
+      image: imageUrl(item.images[0]),
     });
-    alert("Product added to cart");
+    setNotification({ message: 'Product added to cart', type: 'success' });
   };
 
   const handleBuyNow = () => {
     handleAddToCart();
-    navigate("/checkout");
+    navigate('/checkout');
   };
 
   return (
-    <div className="product-container">
-      <div className="product-grid">
-        <div>
-          <div className="product-image-main">
-            <img src={selectedImage} alt={product.name} />
+    <div>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="product-page">
+        <div className="product-main">
+          <div className="product-images">
+          <div className="thumbnail-gallery">
+            {item.images?.map((img, index) => (
+              <img
+                key={index}
+                src={imageUrl(img)}
+                alt={`Thumbnail ${index + 1}`}
+                className={`thumbnail ${selectedImageIndex === index ? 'active' : ''}`}
+                onClick={() => setSelectedImageIndex(index)}
+              />
+            ))}
           </div>
-          <div className="product-thumbnails">
-            <img
-              src={item.image.image_url}
-              onClick={() => setSelectedImage(item.image.image_url)}
-              className={`product-thumbnail ${
-                selectedImage === item.image.image_url ? "thumbnail-active" : ""
-              }`}
-              alt="Thumbnail"
-            />
+          <div className="main-image">
+            <img src={imageUrl(item.images[selectedImageIndex])} alt="Main" />
           </div>
         </div>
 
-        <div className="product-info">
-          <h1 className="product-name">{product.name}</h1>
-          <p className="product-price">{item.price.toLocaleString()} ₫</p>
-          <p className="product-description">{product.description}</p>
+        <div className="product-details">
+        
+          <h1>{product.name}</h1>
+          <p className="price">{item.price.toLocaleString()}₫</p>
+          <p className="description">{product.description}</p>
 
           {item.color && (
             <div className="flex items-center gap-2">
@@ -156,6 +172,46 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'description' ? 'active' : ''}`} onClick={() => setActiveTab('description')}>
+          DESCRIPTION
+        </button>
+        <button className={`tab ${activeTab === 'additional' ? 'active' : ''}`} onClick={() => setActiveTab('additional')}>
+          ADDITIONAL INFORMATION
+        </button>
+        <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+          REVIEWS (0)
+        </button>
+      </div>
+
+      <div className="tab-content">
+        {activeTab === 'description' && (
+          <p>Product description information will be displayed here.</p>
+        )}
+        {activeTab === 'additional' && (
+          <table>
+            <tbody>
+              <tr>
+                <td>Color</td>
+                <td>{item.color?.name || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>Size</td>
+                <td>{item.size || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td>Remaining Quantity</td>
+                <td>{item.quantity}</td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+        {activeTab === 'reviews' && (
+          <p>No reviews yet.</p>
+        )}
+      </div>
+    </div>
     </div>
   );
 };

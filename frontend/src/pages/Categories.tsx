@@ -3,7 +3,7 @@ import Table from "../components/Table";
 import EditForm from "../components/EditForm";
 import SearchBar from "../components/SearchBar";
 import "../styles/categories.css";
-
+import ConfirmDialog from "../components/ConfirmDialog";
 const Categories = () => {
   const [data, setData] = useState([
     { id: 1, name: "T-shirt", category: "Clothing" },
@@ -15,6 +15,8 @@ const Categories = () => {
   const [filteredData, setFilteredData] = useState(data);
   const [editingItem, setEditingItem] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const columns = [
     { key: "id", header: "ID" },
@@ -46,17 +48,24 @@ const Categories = () => {
     setFilteredData(data);
   };
 
-  const handleCancel = () => {
+  const handleCancel = (id: number) => {
     setEditingItem(null);
     setAdding(false);
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      const newData = data.filter((item) => item.id !== id);
+    setItemToDelete(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmResult = (confirm: boolean) => {
+    if (confirm && itemToDelete !== null) {
+      const newData = data.filter((item) => item.id !== itemToDelete);
       setData(newData);
       setFilteredData(newData);
     }
+    setItemToDelete(null);
+    setShowConfirm(false);
   };
 
   return (
@@ -80,6 +89,12 @@ const Categories = () => {
           title={editingItem ? "Edit Category" : "Add Category"}
         />
       )}
+      <ConfirmDialog
+        visible={showConfirm}
+        message="Are you sure you want to delete this category?"
+        onConfirm={() => handleConfirmResult(true)}
+        onCancel={() => handleConfirmResult(false)}
+      />
     </div>
   );
 };

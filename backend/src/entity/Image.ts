@@ -1,5 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
-import { ProductItem } from "./ProductItem";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+} from 'typeorm';
+import { ProductItem } from './ProductItem';
 
 @Entity()
 export class Image {
@@ -9,6 +14,11 @@ export class Image {
   @Column()
   image_url!: string;
 
-  @OneToMany(() => ProductItem, (productItem) => productItem.image)
-  productItems!: ProductItem[];
+
+
+  @ManyToOne(() => ProductItem, (productItem) => productItem.images, {
+    onDelete: 'NO ACTION',
+    nullable: true,
+  })
+  productItem?: ProductItem;
 }

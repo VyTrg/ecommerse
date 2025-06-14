@@ -9,8 +9,21 @@ const userService = new UserService();
 export class UserController {
     static async getAllUsers(req: Request, res: Response) {
         try {
-            const users = await userService.getAllUsers();
-            res.json(users);
+            const page = parseInt(req.query.page as string) || 1;
+const limit = parseInt(req.query.limit as string) || 10;
+const skip = (page - 1) * limit;
+
+const [users, totalCount] = await userRepository.findAndCount({
+    skip,
+    take: limit,
+    order: { id: "ASC" }, 
+});
+
+res.json({
+    data: users,
+    totalCount
+});
+
         } catch (error) {
             res.status(500).json({ message: "Error fetching users", error });
         }

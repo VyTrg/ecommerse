@@ -1,13 +1,14 @@
-// src/components/LoginSection.tsx
 import React, { useState } from 'react';
-
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/LoginSection.css';
-
-
+import Notification from "../components/Notification";
 const LoginSection: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const navigate = useNavigate();
 
 
@@ -24,16 +25,16 @@ const LoginSection: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Lưu thông tin user vào localStorage nếu muốn
+        // Lưu thông tin user vào localStorage nếu muốn
         localStorage.setItem('userInfo', JSON.stringify(data.user));
 
-        alert('Login successful');
-        navigate('/'); // ➜ chuyển về trang chủ sau đăng nhập
+        setNotification({ message: 'Login successful', type: 'success' });
+        navigate('/'); // chuyển về trang chủ sau đăng nhập
       } else {
-        alert(data.message || 'Incorrect username or password');
+        setNotification({ message: data.message || 'Incorrect username or password', type: 'error' });
       }
     } catch (error) {
-      alert('Failed to connect to the server');
+      setNotification({ message: 'Failed to connect to the server', type: 'error' });
       console.error(error);
 
     }

@@ -7,9 +7,8 @@ import Notification from '../components/Notification';
 type ProductItem = {
   id: number;
   price: number;
-  image: {
-    image_url: string;
-  };
+  quantity: number;
+  images: { image_url: string }[];
 };
 
 type Product = {
@@ -26,6 +25,15 @@ type Category = {
   parent_id: number | null;
 };
 
+type FormDataType = {
+  name: string;
+  price: string | number;
+  quantity: string | number;
+  images: string[];
+  category_id: number;
+  description: string;
+};
+
 const ProductManagement = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -34,10 +42,11 @@ const ProductManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     name: '',
-    price: 0,
-    image: '',
+    price: '',
+    quantity: '',
+    images: [],
     category_id: 0,
     description: '',
   });
@@ -59,6 +68,15 @@ const ProductManagement = () => {
         if (!res.ok) throw new Error('Error loading categories');
         return res.json();
       })
+      .then(data => setCategories(data))
+      .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
+  }, []);
+
+  // Removed useEffect for loadProducts as products are fetched above and paginated locally
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/categories')
+      .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => {
         setNotification({ message: `Error loading categories: ${err.message}`, type: 'error' });
@@ -121,8 +139,9 @@ const ProductManagement = () => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      price: product.productItems?.[0]?.price || 0,
-      image: product.productItems?.[0]?.image?.image_url || '',
+      price: product.productItems?.[0]?.price ?? '',
+      quantity: product.productItems?.[0]?.quantity ?? '',
+      images: product.productItems?.[0]?.images?.map(img => img.image_url) || [],
       category_id: product.category_id,
       description: product.description || '',
     });
@@ -212,15 +231,16 @@ const ProductManagement = () => {
             Image (URL):
             <input
               type="text"
-              value={formData.image}
+              value={formData.images[0] || ''}
               onChange={e =>
-                setFormData({ ...formData, image: e.target.value })
+                setFormData({ ...formData, images: [e.target.value] })
               }
             />
           </label>
           <label>
             Description:
             <textarea
+              name="description"
               rows={3}
               value={formData.description}
               onChange={e =>
@@ -242,12 +262,11 @@ const ProductManagement = () => {
             >
               <option value="">-- Select Category --</option>
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </label>
+
           <div style={{ marginTop: '10px' }}>
             <button className="btn-edit" onClick={handleFormSubmit}>
               Save
@@ -258,7 +277,6 @@ const ProductManagement = () => {
           </div>
         </div>
       )}
-
       {!showForm && (
         <>
           <table className="product-table">
@@ -300,8 +318,8 @@ const ProductManagement = () => {
                     </select>
                   </td>
                   <td>
-                    {p.productItems?.[0]?.image?.image_url ? (
-                      <img src={p.productItems[0].image.image_url} alt={p.name} width={60} height={60} />
+                    {p.productItems?.[0]?.images?.[0]?.image_url ? (
+                      <img src={p.productItems[0].images[0].image_url} alt={p.name} width={60} height={60} />
                     ) : (
                       <span>No Image</span>
                     )}
@@ -336,7 +354,8 @@ const ProductManagement = () => {
                 setFormData({
                   name: '',
                   price: 0,
-                  image: '',
+                  quantity: 0,
+                  images: [''],
                   category_id: categories[0]?.id || 0,
                   description: '',
                 });

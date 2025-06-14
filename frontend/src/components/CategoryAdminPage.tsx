@@ -1,158 +1,250 @@
-import React, { useEffect, useState } from "react";
-import "../styles/CategoryAdminPage.css";
-import Pagination from "../components/Pagination";
+import React, { JSX, useEffect, useState } from "react";
+import Notification from "../components/Notification";
+import ConfirmDialog from "../components/ConfirmDialog";
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  all_rate: number;
+  category_id: number;
+};
+
 type Category = {
   id: number;
   name: string;
+  products: Product[];
+  parent?: { id: number; name: string } | null;
+  children?: Category[];
 };
 
 const CategoryAdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [flatCategories, setFlatCategories] = useState<Category[]>([]);
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
   const [newName, setNewName] = useState("");
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [page, setPage] = useState(1);
-  const limit = 10;
-  // Lấy danh sách danh mục
+  const [selectedParent, setSelectedParent] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
   useEffect(() => {
     fetch("http://localhost:3001/api/categories")
-      .then(res => res.json())
-      .then(data => setCategories(data))
-      .catch(err => console.error("Failed to load categories:", err));
+      .then((res) => res.json())
+      .then((data: Category[]) => {
+        setFlatCategories(data);
+        setCategories(buildTree(data));
+      });
   }, []);
 
-  // Bắt đầu sửa
-  const handleEditClick = (category: Category) => {
-    setEditingCategory(category);
-    setNewName(category.name);
+  const buildTree = (flatList: Category[]): Category[] => {
+    const idMap: { [key: number]: Category & { children: Category[] } } = {};
+    const roots: Category[] = [];
+
+    flatList.forEach((cat) => {
+      idMap[cat.id] = { ...cat, children: [] };
+    });
+
+    flatList.forEach((cat) => {
+      const parentId = cat.parent?.id ?? null;
+      if (parentId) {
+        idMap[parentId].children.push(idMap[cat.id]);
+      } else {
+        roots.push(idMap[cat.id]);
+      }
+    });
+
+    return roots;
   };
 
-  // Gửi PUT cập nhật danh mục
-  const handleUpdate = () => {
-    if (!editingCategory) return;
-
-    fetch(`http://localhost:3001/api/categories/${editingCategory.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Update failed");
-        return res.json();
-      })
-      .then(updated => {
-        setCategories(prev =>
-          prev.map(cat => (cat.id === updated.id ? updated : cat))
-        );
-        setEditingCategory(null);
-        alert("Update successful");
-      })
-      .catch(err => alert("Update error: " + err.message));
+  const handleToggleExpand = (id: number) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
-  // Gửi POST thêm danh mục
   const handleAdd = () => {
-    if (!newCategoryName.trim()) {
-      alert("Please enter a category name");
+    if (!newName.trim()) {
+      setNotification({ message: 'Please enter a name', type: 'error' });
       return;
     }
-
     fetch("http://localhost:3001/api/categories/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newCategoryName }),
-    })
-      .then(async res => {
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`(${res.status}) ${errText}`);
-        }
-        return res.json();
-      })
-      .then((created: Category) => {
-        setCategories(prev => [...prev, created]);
-        setNewCategoryName("");
-        alert("Added successfully");
-      })
-      .catch(err => alert("Add error: " + err.message));
+      body: JSON.stringify({ name: newName, parent_id: selectedParent }),
+    }).then(() => window.location.reload());
   };
 
-  // Gửi DELETE xóa danh mục
+  const handleEdit = (id: number, name: string) => {
+    setEditingId(id);
+    setEditingName(name);
+  };
+
+  const handleUpdate = () => {
+    fetch(`http://localhost:3001/api/categories/${editingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editingName }),
+    }).then(() => window.location.reload());
+  };
+
   const handleDelete = (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
-
-    fetch(`http://localhost:3001/api/categories/${id}/delete`, {
-      method: "DELETE",
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Delete failed");
-        setCategories(prev => prev.filter(cat => cat.id !== id));
-        alert("Delete successful");
-      })
-      .catch(err => alert("Delete error: " + err.message));
+    setCategoryToDelete(id);
+    setShowConfirm(true);
   };
-  const totalCount = categories.length;
-  const totalPages = Math.ceil(totalCount / limit);
-  const start = (page - 1) * limit;
-  const currentCategories = categories.slice(start, start + limit);
-  return (
-    <div className="product-table-container">
-      <h2 className="product-table-title">Category Management</h2>
 
-      <div className="add-category-form">
+  const handleConfirmDelete = () => {
+  if (categoryToDelete === null) return;
+
+  fetch(`http://localhost:3001/api/categories/${categoryToDelete}/delete`, {
+    method: "DELETE",
+  }).then(() => window.location.reload());
+
+  setShowConfirm(false);
+  setCategoryToDelete(null);
+  };
+  const handleCancelDelete = () => {
+    setShowConfirm(false);
+    setCategoryToDelete(null);
+  };
+  const renderFlatList = (list: Category[], level = 0): JSX.Element[] => {
+    let items: JSX.Element[] = [];
+
+    list.forEach((cat) => {
+      items.push(
+        <div
+          key={cat.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "10px 12px",
+            borderBottom: "1px solid #eee",
+            paddingLeft: `${level * 20}px`,
+            background: "#fff",
+          }}
+        >
+          {cat.children && cat.children.length > 0 ? (
+            <span
+              style={{
+                cursor: "pointer",
+                fontWeight: "bold",
+                width: "20px",
+                textAlign: "center",
+                padding: "20px",
+              }}
+              onClick={() => handleToggleExpand(cat.id)}
+            >
+              {expandedIds.includes(cat.id) ? "▼" : "▶"}
+            </span>
+          ) : (
+            <span style={{ width: "20px",padding:"20px"}}></span>
+          )}
+
+          {editingId === cat.id ? (
+            <>
+              <input
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                style={{ flex: 1, padding: "4px" }}
+              />
+              <button onClick={handleUpdate}>Save</button>
+              <button onClick={() => setEditingId(null)}>Exit</button>
+            </>
+          ) : (
+            <>
+              <span style={{ flex: 1 }}>{cat.name}</span>
+              <button onClick={() => handleEdit(cat.id, cat.name)}>Edit</button>
+              <button onClick={() => handleDelete(cat.id)}>Delete</button>
+            </>
+          )}
+        </div>
+      );
+
+      if (expandedIds.includes(cat.id) && cat.children && cat.children.length > 0) {
+        items = items.concat(renderFlatList(cat.children, level + 1));
+      }
+    });
+
+    return items;
+  };
+
+  return (
+    <div
+      style={{
+        padding: "30px",
+        color: "#333",
+        fontFamily: "Arial, sans-serif",
+        maxWidth: "800px",
+        margin: "auto",
+      }}
+    >
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        visible={showConfirm}
+        message="You want to delete this category?"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      <h2 style={{ textAlign: "center",padding:"20px", }}>Category Management</h2>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
         <input
           type="text"
-          placeholder="New category name"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
+          placeholder="Category Name"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          style={{ padding: "8px", flex: "1 1 200px" }}
         />
-        <button className="btn-add" onClick={handleAdd}>Add Category</button>
+        <select
+          value={selectedParent ?? ""}
+          onChange={(e) =>
+            setSelectedParent(e.target.value ? parseInt(e.target.value) : null)
+          }
+          style={{ padding: "8px", flex: "1 1 200px" }}
+        >
+          <option value="">No parent category</option>
+          {flatCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+        <button onClick={handleAdd} style={{ padding: "8px 16px" }}>
+          Add
+        </button>
       </div>
 
-      <table className="product-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Category Name</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentCategories.map((cat) => (
-            <tr key={cat.id}>
-              <td>{cat.id}</td>
-              <td>
-                {editingCategory?.id === cat.id ? (
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                ) : (
-                  cat.name
-                )}
-              </td>
-              <td>
-                {editingCategory?.id === cat.id ? (
-                  <>
-                    <button className="btn-edit" onClick={handleUpdate}>Save</button>
-                    <button className="btn-cancel" onClick={() => setEditingCategory(null)}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <button className="btn-edit" onClick={() => handleEditClick(cat)}>Edit</button>
-                    <button className="btn-delete" onClick={() => handleDelete(cat.id)}>Delete</button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {totalPages > 1 && (
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </div>
-      )}
+      <div
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: "6px",
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        }}
+      >
+        {renderFlatList(categories)}
+      </div>
     </div>
   );
 };

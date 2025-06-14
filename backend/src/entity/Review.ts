@@ -1,14 +1,14 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
-import { OrderItem } from "./OrderItems";
+import { Order_item } from "./Order_item";
 
 @Entity()
 export class Review {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => OrderItem, (orderItem) => orderItem.id, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Order_item, (orderItem) => orderItem.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: "order_item_id" })
-  orderItem!: OrderItem;
+  orderItem!: Order_item;
 
   @Column({ type: 'decimal', precision: 2, scale: 1 })
   rate!: number;

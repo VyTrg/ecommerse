@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "../styles/SearchResult.css";
-
+import Pagination from "../components/Pagination";
 interface ProductItem {
   price: number;
-  image: {
+  images: {
     image_url: string;
-  };
+  }[];
 }
 
 interface Product {
@@ -21,6 +21,10 @@ const SearchResult = () => {
   const { search } = useLocation();
   const query = new URLSearchParams(search).get("q") || "";
 
+  const [page, setPage] = useState(1);
+    const limit = 12;
+    const [totalCount, setTotalCount] = useState(0);
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,8 +50,8 @@ const SearchResult = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [query]);
-
+  }, [query, page]);
+  const totalPages = Math.ceil(totalCount / limit);
   return (
     <div className="search-result-container">
       <h2 className="title">Search results for: "{query}"</h2>
@@ -63,7 +67,8 @@ const SearchResult = () => {
             <div className="product-grid">
               {products.map((product) => {
                 const firstItem = product.productItems?.[0];
-                const imageUrl = firstItem?.image?.image_url?.trim() || "/default.jpg";
+                const firstImage = firstItem?.images?.[0];
+                const imageUrl = firstImage?.image_url?.trim() || "/default.jpg";
                 const price = firstItem?.price;
 
                 return (
@@ -85,6 +90,10 @@ const SearchResult = () => {
                   </div>
                 );
               })}
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <Pagination page={page} totalPages={totalPages} onChange={(newPage) => setPage(newPage)} />
+              )}
             </div>
           )}
         </>

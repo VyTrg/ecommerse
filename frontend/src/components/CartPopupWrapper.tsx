@@ -9,14 +9,14 @@ const CartPopupWrapper = ({
   cartOpen: boolean;
   setCartOpen: (open: boolean) => void;
 }) => {
-  const { cart, updateQuantity, removeItem } = useCart(); // ✅ Sửa tại đây
+  const { cart, updateQuantity, removeItem } = useCart(); 
 
   return (
     <ShoppingCartPopup
       isOpen={cartOpen}
       onClose={() => setCartOpen(false)}
       cartItems={cart}
-      updateQuantity={updateQuantity} // ✅ Không còn lỗi
+      updateQuantity={updateQuantity} 
       removeItem={removeItem}
     />
   );

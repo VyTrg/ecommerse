@@ -2,27 +2,27 @@ import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
 import { Order } from "../entity/Order";
 import { ProductItem } from "../entity/ProductItem"; // Adjusted path to match the correct directory
-import { OrderItem } from "../entity/OrderItems";
+import { Order_item } from "../entity/Order_item"; // Adjusted path to match the correct directory
 
 export class OrderItemService {
-    private orderItemRepository: Repository<OrderItem>;
+    private orderItemRepository: Repository<Order_item>;
     private orderRepository: Repository<Order>;
     private productItemRepository: Repository<ProductItem>;
 
     constructor() {
-        this.orderItemRepository = AppDataSource.getRepository(OrderItem);
+        this.orderItemRepository = AppDataSource.getRepository(Order_item);
         this.orderRepository = AppDataSource.getRepository(Order);
         this.productItemRepository = AppDataSource.getRepository(ProductItem);
     }
 
     // Lấy tất cả order items (có quan hệ)
-    async getAllOrderItems(): Promise<OrderItem[]> {
+    async getAllOrderItems(): Promise<Order_item[]> {
         return this.orderItemRepository.find({
             relations: ["order", "productItem"],
         });
     }
 
-    async getByOrderId(orderId: number): Promise<OrderItem[]> {
+    async getByOrderId(orderId: number): Promise<Order_item[]> {
         return this.orderItemRepository.find({
         where: { order: { id: orderId } },
         relations: ["productItem", "productItem.product"],
@@ -35,7 +35,7 @@ export class OrderItemService {
         productItem: { id: number };
         quantity: string;
         price: string;
-    }): Promise<OrderItem> {
+    }): Promise<Order_item> {
         const order = await this.orderRepository.findOne({ where: { id: data.order.id } });
         if (!order) throw new Error("Order not found");
 
@@ -49,12 +49,12 @@ export class OrderItemService {
             price: data.price,
         });
 
-        return this.orderItemRepository.save(orderItem);
+        return await this.orderItemRepository.save(orderItem);
     }
 
-    // Xóa order item theo id
     async deleteOrderItem(id: number): Promise<boolean> {
         const result = await this.orderItemRepository.delete(id);
         return result.affected !== 0;
     }
 }
+

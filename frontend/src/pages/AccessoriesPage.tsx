@@ -16,11 +16,10 @@ const mapCategoryToId = (category: string): number | null => {
   return map[category.toLowerCase()] ?? null;
 };
 
-// ✅ Bao gồm cả danh mục cha Accessories (id = 3)
+
 const accessoriesCategoryIds = [3, 9, 10];
 
 const AccessoriesPage = () => {
-
   const [page, setPage] = useState(1);
   const limit = 12;
   const [totalCount, setTotalCount] = useState(0);
@@ -29,6 +28,7 @@ const AccessoriesPage = () => {
   const { category } = useParams(); // nếu dùng /accessories/:category
   const categoryIdFromUrl = category ? mapCategoryToId(category) : null;
 
+ 
   const categoryIdsToUse =
     categoryIdFromUrl !== null ? [categoryIdFromUrl] : accessoriesCategoryIds;
 
@@ -42,7 +42,7 @@ const AccessoriesPage = () => {
   const handleClearFilters = () => {
     setFilters({});
     setIsFiltering(false);
-    setPage(1); // Reset page
+    setPage(1);
   };
   const totalPages = Math.ceil(totalCount / limit);
 
@@ -55,7 +55,7 @@ const AccessoriesPage = () => {
     return (
       <main className="accessories-page">
         <Breadcrumb title="Accessories" />
-        <p style={{ padding: 24 }}>No matching categories found. </p>
+        <p style={{ padding: 24 }}>No matching categories found.</p>
       </main>
     );
   }
@@ -70,7 +70,7 @@ const AccessoriesPage = () => {
         />
         <div className="right-content">
           {isFiltering && (
-            <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <div style={{ marginBottom: 16, textAlign: "right" }}>
               <button className="filter-btn" onClick={handleClearFilters}>
                 Delete Filter
               </button>
@@ -82,14 +82,14 @@ const AccessoriesPage = () => {
               <FilteredProductList
                 filters={filters}
                 parentCategoryId={3}
-                allowedSubcategoryIds={[20, 21]}
+                allowedSubcategoryIds={[9, 10]}
                 page={page}
                 limit={limit}
                 onTotalCountChange={setTotalCount}
               />
             ) : (
               <ProductList
-                categoryIds={[3, 20, 21]}
+                categoryIds={categoryIdsToUse} 
                 page={page}
                 limit={limit}
                 onTotalCountChange={setTotalCount}

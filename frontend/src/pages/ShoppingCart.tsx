@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/global.css";
 import "../styles/ShoppingCart.css";
 import Breadcrumb from "../components/Breadcrumb";
 // import Sidebar from "../components/Sidebar";
 import CartItem from "../components/CartItem";
 import CartSummary from "../components/CartSummary";
+import Notification from "../components/Notification";
 
 interface CartProduct {
   id: number;
@@ -25,6 +26,18 @@ const ShoppingCart: React.FC = () => {
     },
   ]);
 
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+  
   const updateQuantity = (id: number, quantity: number) => {
     if (quantity < 1) return;
     setCart(cart.map((item) => (item.id === id ? { ...item, quantity } : item)));
@@ -38,6 +51,14 @@ const ShoppingCart: React.FC = () => {
   const shipping = 15.0;
 
   return (
+    <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     <main className="shopping-cart-page">
       <Breadcrumb title="SHOPPING CART" />
       <div className="content-container">
@@ -68,11 +89,12 @@ const ShoppingCart: React.FC = () => {
   </div>
 
   {/* Tóm tắt giỏ hàng */}
-  <CartSummary subtotal={subtotal} shipping={shipping} onCheckout={() => alert("Proceeding to checkout!")} />
+  <CartSummary subtotal={subtotal} shipping={shipping} onCheckout={() => setNotification({ message: 'Proceeding to checkout!', type: 'success' })} />
 </div>
 
       </div>
     </main>
+    </>
   );
 };
 

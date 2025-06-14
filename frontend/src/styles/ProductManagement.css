@@ -201,10 +201,15 @@
   .form-popup label {
     display: block;
     margin-bottom: 12px;
+
     font-weight: 500;
     color: #333;
+  }.form-popup .textarea {
+   min-width: 300px;
+   max-width: auto;
+   
   }
-  
+ 
   .form-popup input,
   .form-popup select {
     width: 100%;

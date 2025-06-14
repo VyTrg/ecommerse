@@ -4,6 +4,12 @@ import { AppDataSource } from "../config/datasource";
 import { NotFoundException } from "@nestjs/common";
 import util from "util";
 
+// Khai báo type input gọn gàng
+interface CategoryInput {
+    name: string;
+    parent_id?: number | null;
+}
+
 export class CategoryService {
     private categoryRepository: Repository<Category>;
 
@@ -14,7 +20,7 @@ export class CategoryService {
     async getAllCategories(): Promise<Category[]> {
         try {
             return await this.categoryRepository.find({
-                relations: ['parent', 'children', 'products']
+                relations: ['parent', 'children', 'products'],
             });
         } catch (error: any) {
             console.error("getAllCategories Error:", util.inspect(error, { depth: null }));
@@ -26,7 +32,7 @@ export class CategoryService {
         try {
             const category = await this.categoryRepository.findOne({
                 where: { id },
-                relations: ['parent', 'children', 'products']
+                relations: ['parent', 'children', 'products'],
             });
             if (!category) {
                 throw new NotFoundException(`Category with ID ${id} not found`);
@@ -39,19 +45,23 @@ export class CategoryService {
         }
     }
 
-    async createCategory(categoryData: Partial<Category & { parent?: { id: number } }>): Promise<Category> {
+    async createCategory(data: CategoryInput): Promise<Category> {
         try {
-            if (categoryData.parent?.id) {
+            const category = new Category();
+            category.name = data.name;
+
+            if (data.parent_id) {
                 const parent = await this.categoryRepository.findOne({
-                    where: { id: categoryData.parent.id }
+                    where: { id: data.parent_id },
                 });
                 if (!parent) {
                     throw new NotFoundException('Parent category not found');
                 }
-                categoryData.parent = parent;
+                category.parent = parent;
+            } else {
+                category.parent = null;
             }
 
-            const category = this.categoryRepository.create(categoryData);
             return await this.categoryRepository.save(category);
         } catch (error: any) {
             console.error("❌ createCategory Error:", util.inspect(error, { depth: null }));
@@ -60,21 +70,23 @@ export class CategoryService {
         }
     }
 
-    async updateCategory(id: number, categoryData: Partial<Category & { parent?: { id: number } }>): Promise<Category> {
+    async updateCategory(id: number, data: CategoryInput): Promise<Category> {
         try {
             const category = await this.getCategoryById(id);
+            category.name = data.name;
 
-            if (categoryData.parent?.id) {
+            if (data.parent_id) {
                 const parent = await this.categoryRepository.findOne({
-                    where: { id: categoryData.parent.id }
+                    where: { id: data.parent_id },
                 });
                 if (!parent) {
                     throw new NotFoundException('Parent category not found');
                 }
-                categoryData.parent = parent;
+                category.parent = parent;
+            } else {
+                category.parent = null;
             }
 
-            Object.assign(category, categoryData);
             return await this.categoryRepository.save(category);
         } catch (error: any) {
             console.error("❌ updateCategory Error:", util.inspect(error, { depth: null }));
@@ -92,7 +104,7 @@ export class CategoryService {
             }
 
             const childCategories = await this.categoryRepository.find({
-                where: { parent: { id } } as any
+                where: { parent: { id } } as any,
             });
 
             if (childCategories.length > 0) {
@@ -111,7 +123,7 @@ export class CategoryService {
         try {
             return await this.categoryRepository.find({
                 where: { parent: IsNull() } as any,
-                relations: ['children', 'children.children']
+                relations: ['children', 'children.children'],
             });
         } catch (error: any) {
             console.error("❌ getCategoryHierarchy Error:", util.inspect(error, { depth: null }));
@@ -123,7 +135,7 @@ export class CategoryService {
         try {
             return await this.categoryRepository.find({
                 where: { parent: { id: parentId } } as any,
-                relations: ['children', 'products']
+                relations: ['children', 'products'],
             });
         } catch (error: any) {
             console.error("❌ getCategoriesByParentId Error:", util.inspect(error, { depth: null }));

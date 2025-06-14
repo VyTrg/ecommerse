@@ -1,7 +1,6 @@
-// src/components/RegisterSection.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-
+import Notification from "../components/Notification";
 
 import '../styles/RegisterSection.css';
 
@@ -15,12 +14,16 @@ const RegisterSection: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
 
   const handleRegister = async () => {
 
     if (password !== confirmPassword) {
-      alert('Mật khẩu không khớp');
+      setNotification({message: 'Password does not match', type: 'error',});
       return;
     }
 
@@ -41,21 +44,29 @@ const RegisterSection: React.FC = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert('Đăng ký thành công!');
+        setNotification({ message: 'Registration successful!', type: 'success' });
         navigate('/login');
       } else {
-        alert(data.message || 'Đăng ký thất bại');
+        setNotification({ message: data.message || 'Registration failed', type: 'error' });
       }
     } catch (error) {
-      alert('Lỗi kết nối đến server');
+      setNotification({ message: 'Server connection error', type: 'error' });
       console.error(error);
     }
 
   };
 
   return (
-    <div className="login-section">
-      <h2>REGISTER</h2>
+    <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="login-section">
+        <h2>REGISTER</h2>
 
       <p>Create an account to track orders, save favorites, and more!</p>
 
@@ -146,7 +157,8 @@ const RegisterSection: React.FC = () => {
           Already have an account? <Link to="/login">Login here</Link>
         </p>
       </form>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -71,51 +71,56 @@ export class ProductController {
 
 
   static getAllProducts = async (req: Request, res: Response): Promise<void> => {
-    try {
-      
-      const categoryName = req.query.category?.toString().toLowerCase();
-      const categoryRepo = AppDataSource.getRepository(Category);
 
-      if (categoryName) {
-        const allCategories = await categoryRepo.find({ relations: ["parent"] });
+  try {
+    const categoryRepo = AppDataSource.getRepository(Category);
+    const categoryName = req.query.category?.toString().toLowerCase();
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
 
-        console.log(" All categories:", allCategories.map(c => ({
-          id: c.id,
-          name: c.name,
-          parentId: c.parent?.id ?? null
-        })));
+    let matchedCategoryIds: number[] = [];
 
-        const parentCategory = allCategories.find(
-          (c) => c.name.toLowerCase() === categoryName
-        );
+    if (categoryName) {
+      const allCategories = await categoryRepo.find({ relations: ["parent"] });
 
-        console.log("Matched parentCategory:", parentCategory);
+      const parentCategory = allCategories.find(
+        (c) => c.name.toLowerCase() === categoryName
+      );
 
-        if (!parentCategory) {
-          res.json([]);
-          return;
-        }
-
-        const matchedCategoryIds = allCategories
-          .filter((c) => c.id === parentCategory.id || c.parent?.id === parentCategory.id)
-          .map((c) => c.id);
-
-        console.log(" Matched category IDs:", matchedCategoryIds);
-
-        const products = await productService.getProductsByCategoryIds(matchedCategoryIds);
-        console.log("Found products:", products.length);
-        res.json(products);
+      if (!parentCategory) {
+        res.json({ data: [], totalCount: 0 });
         return;
       }
 
-      const products = await productService.getAllProducts();
-      console.log("All products:", products.length);
-      res.json(products);
-    } catch (error) {
-      console.error("Error in getAllProducts:", error); 
-      res.status(500).json({ message: "Error fetching products", error });
+      matchedCategoryIds = allCategories
+        .filter((c) => c.id === parentCategory.id || c.parent?.id === parentCategory.id)
+        .map((c) => c.id);
     }
-  };
+
+    // Đếm total
+    const totalCount = await productService.countProducts(matchedCategoryIds);
+
+    // Lấy product có phân trang
+    const products = await productService.getProductsPaginated(matchedCategoryIds, offset, limit);
+
+    res.json({
+      data: products,
+      totalCount: totalCount
+    });
+
+  } catch (error) {
+    console.error("❌ Error in getAllProducts:", error);
+    res.status(500).json({
+      message: "Error fetching products",
+      error: {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+    });
+  }
+};
+
 
   static getProductById = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -126,8 +131,14 @@ export class ProductController {
       }
       res.json(product);
     } catch (error) {
-      console.error("💥 Error in getProductById:", error);
-      res.status(500).json({ message: "Error fetching product", error });
+      console.error("❌ Error in getProductById:", error);
+      res.status(500).json({
+        message: "Error fetching product",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
   };
 
@@ -136,8 +147,14 @@ export class ProductController {
       const product = await productService.createProduct(req.body);
       res.status(201).json(product);
     } catch (error) {
-      console.error("💥 Error creating product:", error);
-      res.status(500).json({ message: "Error creating product", error });
+      console.error("❌ Error creating product:", error);
+      res.status(500).json({
+        message: "Error creating product",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
   };
 
@@ -150,8 +167,14 @@ export class ProductController {
       }
       res.json(updatedProduct);
     } catch (error) {
-      console.error("💥 Error updating product:", error);
-      res.status(500).json({ message: "Error updating product", error });
+      console.error("❌ Error updating product:", error);
+      res.status(500).json({
+        message: "Error updating product",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
   };
 
@@ -164,8 +187,14 @@ export class ProductController {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("💥 Error deleting product:", error);
-      res.status(500).json({ message: "Error deleting product", error });
+      console.error("❌ Error deleting product:", error);
+      res.status(500).json({
+        message: "Error deleting product",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
   };
 
@@ -181,8 +210,14 @@ export class ProductController {
       console.log(`🔎 Search matched ${filtered.length} product(s) with query "${query}"`);
       res.json(filtered);
     } catch (error) {
-      console.error("💥 Error searching products:", error);
-      res.status(500).json({ message: "Error searching products", error });
+      console.error("❌ Error searching products:", error);
+      res.status(500).json({
+        message: "Error searching products",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
   };
 

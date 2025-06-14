@@ -9,30 +9,51 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { Address } from "./Address";
-import { Shipping_method } from "./ShippingMethod";
+import { Shipping_method } from "./Shipping_method";
 import { Order_status } from "./Order_status";
-import { OrderItem } from "./OrderItems"; //  Import thêm
+import { Order_item } from "./Order_item"; 
 
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => User, (user) => user.orders, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, (user) => user.orders, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
   @JoinColumn({ name: "user_id" })
-  user!: User;
+  user: User | null = null;
 
-  @ManyToOne(() => Address, { onDelete: "CASCADE" })
+  @Column({ nullable: true })
+  guest_name!: string;
+
+  @Column({ nullable: true })
+  guest_email!: string;
+
+  @Column({ nullable: true })
+  guest_phone!: string;
+
+  @ManyToOne(() => Address, {
+    onDelete: "CASCADE",
+    nullable: true,
+  })
   @JoinColumn({ name: "shipping_address_id" })
-  shippingAddress!: Address;
+  shippingAddress: Address | null = null;
 
-  @ManyToOne(() => Shipping_method, { onDelete: "SET NULL" })
+  @ManyToOne(() => Shipping_method, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
   @JoinColumn({ name: "shipping_method_id" })
-  shippingMethod!: Shipping_method;
+  shippingMethod: Shipping_method | null = null;
 
-  @ManyToOne(() => Order_status, { onDelete: "SET NULL" })
+  @ManyToOne(() => Order_status, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
   @JoinColumn({ name: "order_status_id" })
-  orderStatus!: Order_status;
+  orderStatus: Order_status | null = null;
 
   @CreateDateColumn()
   orderDate!: Date;
@@ -40,7 +61,9 @@ export class Order {
   @Column({ type: "decimal", precision: 10, scale: 2 })
   order_total!: string;
 
-  //  Quan hệ với OrderItem
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
-  orderItems!: OrderItem[];
+  @OneToMany(() => Order_item, (orderItem) => orderItem.order, {
+    cascade: true,
+    eager: true,
+  })
+  orderItems!: Order_item[];
 }

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/UserForm.css';
 import { User, UserInput } from '../types/User';
-
+import Notification from "../components/Notification";
 type Props = {
   initialData?: User;
   onSubmit: (user: UserInput | User) => void;
@@ -15,20 +15,23 @@ const UserForm: React.FC<Props> = ({ initialData, onSubmit, onCancel }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   useEffect(() => {
     if (initialData) {
       setUsername(initialData.username || '');
       setEmail(initialData.email || '');
       setPhone(initialData.phone || '');
     }
-  }, [initialData]);
+  }, [notification]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!initialData && password !== confirmPassword) {
-      alert('Password do not match');
+      setNotification({ message: 'Passwords do not match', type: 'error' });
       return;
     }
 
@@ -40,8 +43,16 @@ const UserForm: React.FC<Props> = ({ initialData, onSubmit, onCancel }) => {
   };
 
   return (
-    <form className="user-form" onSubmit={handleSubmit}>
-      <h3>{initialData ? 'Edit user' : 'Add user'}</h3>
+    <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <form className="user-form" onSubmit={handleSubmit}>
+        <h3>{initialData ? 'Edit user' : 'Add user'}</h3>
 
       <div className="form-group">
         <label>Username</label>
@@ -111,6 +122,7 @@ const UserForm: React.FC<Props> = ({ initialData, onSubmit, onCancel }) => {
         </button>
       </div>
     </form>
+    </>
   );
 };
 

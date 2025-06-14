@@ -59,7 +59,7 @@ const SwimwearPage = () => {
             {isFiltering ? (
               <FilteredProductList
                 filters={filters}
-                parentCategoryId={3}
+                parentCategoryId={2}
                 allowedSubcategoryIds={[20, 21]}
                 page={page}
                 limit={limit}
@@ -67,7 +67,7 @@ const SwimwearPage = () => {
               />
             ) : (
               <ProductList
-                categoryIds={[3, 20, 21]}
+                categoryIds={[2,13,14]}
                 page={page}
                 limit={limit}
                 onTotalCountChange={setTotalCount}

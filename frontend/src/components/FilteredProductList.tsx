@@ -10,7 +10,7 @@ export type ProductItem = {
   price: number;
   size?: string;
   color?: { name: string };
-  image: { image_url: string };
+  images: { image_url?: string }[];
   product: { name: string; category_id: number };
 };
 
@@ -42,38 +42,40 @@ const FilteredProductList: React.FC<FilteredProductListProps> = ({
         if (!res.ok) throw new Error("Failed to fetch");
         const data: ProductItem[] = await res.json();
 
-        // filter by category/subcategory
+        const validItems = data.filter(
+          (item) =>
+            item &&
+            item.product &&
+            typeof item.product.category_id === "number"
+        );
+
         let filtered = filters.subcategory
-          ? data.filter(
-              item =>
-                item.product.category_id === Number(filters.subcategory)
+          ? validItems.filter(
+              (item) => item.product.category_id === Number(filters.subcategory)
             )
-          : data.filter(
-              item =>
+          : validItems.filter(
+              (item) =>
                 item.product.category_id === parentCategoryId ||
                 allowedSubcategoryIds?.includes(item.product.category_id)
             );
 
-        // filter by price
         if (filters.minPrice)
           filtered = filtered.filter(
-            item => item.price >= Number(filters.minPrice)
+            (item) => item.price >= Number(filters.minPrice)
           );
         if (filters.maxPrice)
           filtered = filtered.filter(
-            item => item.price <= Number(filters.maxPrice)
+            (item) => item.price <= Number(filters.maxPrice)
           );
-        // filter by color
         if (filters.color)
           filtered = filtered.filter(
-            item =>
-              item.color?.name.toLowerCase() ===
+            (item) =>
+              item.color?.name?.toLowerCase() ===
               filters.color!.toLowerCase()
           );
-        // filter by size
         if (filters.size)
           filtered = filtered.filter(
-            item =>
+            (item) =>
               item.size?.toLowerCase() === filters.size!.toLowerCase()
           );
 
@@ -83,23 +85,20 @@ const FilteredProductList: React.FC<FilteredProductListProps> = ({
         console.error("Error loading filtered products:", err);
       }
     })();
-  }, [
-    filters,
-    parentCategoryId,
-    allowedSubcategoryIds,
-    onTotalCountChange,
-  ]);
+  }, [filters, parentCategoryId, allowedSubcategoryIds, onTotalCountChange]);
 
-  // slicing
   const start = (page - 1) * limit;
   const currentItems = productItems.slice(start, start + limit);
 
   const handleBuyNow = (item: ProductItem) => {
+    const image = item.images?.[0];
+    const imageUrl =  image?.image_url || "/fallback.jpg";
+
     addToCart({
       id: item.id,
       name: item.product.name,
       price: item.price,
-      image: item.image.image_url,
+      image: imageUrl,
     });
     setIsCartOpen(true);
   };
@@ -110,18 +109,23 @@ const FilteredProductList: React.FC<FilteredProductListProps> = ({
         {currentItems.length === 0 ? (
           <p className="no-product">No matching products found.</p>
         ) : (
-          currentItems.map(item => (
-            <ProductCard
-              key={item.id}
-              product={{
-                id: item.id,
-                name: item.product.name,
-                img: item.image.image_url,
-                price: item.price,
-              }}
-              onBuy={() => handleBuyNow(item)}
-            />
-          ))
+          currentItems.map((item) => {
+            const image = item.images?.[0];
+            const imageUrl =  image?.image_url || "/fallback.jpg";
+
+            return (
+              <ProductCard
+                key={item.id}
+                product={{
+                  id: item.id,
+                  name: item.product.name,
+                  img: imageUrl,
+                  price: item.price,
+                }}
+                onBuy={() => handleBuyNow(item)}
+              />
+            );
+          })
         )}
       </div>
 

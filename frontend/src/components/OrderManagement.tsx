@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import '../styles/OrderManagement.css';
 import { useNavigate } from 'react-router-dom';
+import '../styles/OrderManagement.css';
+
 
 // Import ConfirmDialog và Notification
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -139,6 +140,10 @@ const OrderManagement: React.FC = () => {
       });
   };
 
+  const handleDetail = (id: number) => {
+    navigate(`/admin/orders/${id}`);
+  };
+
   return (
     <div className="order-container">
       {/* Render Notification nếu có */}
@@ -204,6 +209,22 @@ const OrderManagement: React.FC = () => {
           ))}
         </tbody>
       </table>
+
+      {/* {totalPages > 1 && (
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+            <button key={pageNumber}
+              style={{
+                margin: 4, padding: '8px 12px',
+                backgroundColor: pageNumber === page ? '#333' : '#eee',
+                color: pageNumber === page ? '#fff' : '#000',
+                border: 'none', borderRadius: 4, cursor: 'pointer',
+              }}
+              onClick={() => setPage(pageNumber)}>{pageNumber}
+            </button>
+          ))}
+        </div>
+      )} */}
     </div>
   );
 };

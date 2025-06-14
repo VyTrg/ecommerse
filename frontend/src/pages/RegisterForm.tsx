@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/RegisterForm.css';  // Ensure the correct path to your CSS file
 import { Link } from 'react-router-dom';
+import Notification from '../components/Notification';
+
 const RegisterForm: React.FC = () => {
   // Local state for handling form inputs
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
+  // Tự động ẩn sau 3 giây
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
   const handleRegister = () => {
     // Example: Handle registration logic here (e.g., API call)
     if (password !== confirmPassword) {
-      alert('Passwords do not match!');
+      setNotification({ message: 'Passwords do not match!', type: 'error' });
       return;
     }
     console.log('Username:', username);
@@ -21,6 +34,13 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="register-section">
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <h2>REGISTER</h2>
       <p>
         Creating an account allows you to access your order status and history. Fill in the fields below to sign up.

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Table from "../components/Table";
 import EditForm from "../components/EditForm";
 import SearchBar from "../components/SearchBar";
 import "../styles/product.css";
+import Notification from "../components/Notification";
 
 const Products = () => {
   const [data, setData] = useState([
@@ -15,7 +16,17 @@ const Products = () => {
   const [filteredData, setFilteredData] = useState(data);
   const [editingItem, setEditingItem] = useState(null);
   const [adding, setAdding] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const handleSearch = (query) => {
     const lowerCaseQuery = query.toLowerCase();
@@ -55,7 +66,10 @@ const Products = () => {
   };
 
   const handleBuy = (item) => {
-    alert(`You have selected to buy: ${item.name} for ${item.value.toLocaleString()}₫`);
+    setNotification({
+      message: `Bạn đã chọn mua: ${item.name} với giá ${item.value.toLocaleString()}₫`,
+      type: "success",
+    });
     // TODO: Thêm logic giỏ hàng ở đây
   };
 
@@ -91,6 +105,14 @@ const Products = () => {
   ];
 
   return (
+    <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     <div className="products-container">
       <div className="products-header">
         <h1 className="title">Products</h1>
@@ -112,6 +134,7 @@ const Products = () => {
         />
       )}
     </div>
+    </>
   );
 };
 

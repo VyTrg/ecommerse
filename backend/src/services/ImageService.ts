@@ -26,5 +26,20 @@ export class ImageService {
         const result = await this.imageRepository.delete(id);
         return result.affected !== 0;
     }
+    async updateImage(id: number, data: Partial<Image>): Promise<Image> {
+  await this.imageRepository.update(id, data);
+  const updatedImage = await this.imageRepository.findOneBy({ id });
+  if (!updatedImage) {
+    throw new Error(`Image with id ${id} not found`);
+  }
+  return updatedImage;
+}
+
+    async getImageList(): Promise<{ id: number; image_url: string }[]> {
+    return this.imageRepository.find({
+        select: ['id', 'image_url'],
+    });
+}
+
 
 }

@@ -90,7 +90,7 @@ export class CartItemService {
     async getCartTotal(cartId: number): Promise<number> {
         const cartItems = await this.getCartItemsByCartId(cartId);
         return cartItems.reduce((total, item) => {
-            return total + (parseFloat(item.productItem.price) * item.quantity);
+            return total + (item.productItem.price * item.quantity);
         }, 0);
     }
 }

@@ -1,5 +1,5 @@
 import { AppDataSource } from "../config/datasource";
-import { Shipping_method } from "../entity/ShippingMethod";
+import { Shipping_method } from "../entity/Shipping_method";
 
 const repo = AppDataSource.getRepository(Shipping_method);
 

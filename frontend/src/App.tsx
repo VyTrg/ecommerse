@@ -16,9 +16,9 @@ import ShoppingCartPopup from "./components/ShoppingCartPopup";
 import ForgotPassword from "./components/ForgotPassword";
 import ProductManagement from "./components/ProductManagement";
 import OrderManagement from "./components/OrderManagement";
-
+import OrderDetails from "./components/OrderDetails";
 import SearchResult from "./pages/SearchResult";
-import { CartProvider, useCart } from "./contexts/CartContext"; 
+import { CartProvider } from "./contexts/CartContext"; 
 import CartPopupWrapper from "./components/CartPopupWrapper"; 
 import "./assets/themify-icons/themify-icons.css";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -40,6 +40,7 @@ const App = () => {
         <Navbar onCartClick={() => setCartOpen(true)} />
 
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/clothing" element={<ClothingPage />} />
           <Route path="/swimwear" element={<Swimwear />} />
@@ -53,8 +54,10 @@ const App = () => {
           <Route path="/search" element={<SearchResult />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
-         
-           <Route path="/clothing/:category" element={<ClothingPage />} />
+          <Route path="/clothing/:category" element={<ClothingPage />} />
+
+          {/* Order Detail dành cho User */}
+          <Route path="/orders/:id" element={<OrderDetails />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -62,6 +65,7 @@ const App = () => {
             <Route path="products" element={<ProductManagement />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="orders" element={<OrderManagement />} />
+            <Route path="orders/:id" element={<OrderDetails />} />  {/* 🟢 Thêm chi tiết admin */}
             <Route path="categories" element={<CategoryAdminPage />} />
 
             <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
@@ -69,9 +73,7 @@ const App = () => {
           </Route>
         </Routes>
 
-        {}
         <CartPopupWrapper cartOpen={cartOpen} setCartOpen={setCartOpen} />
-
         <Footer />
       </Router>
     </CartProvider>

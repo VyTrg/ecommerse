@@ -40,7 +40,7 @@ const categorySizes: Record<string, string[]> = {
 const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) => {
   const [openCategories, setOpenCategories] = useState<{ [key: string]: boolean }>({});
   const [filters, setFilters] = useState<FilterOptions>({});
-  const [priceRange, setPriceRange] = useState<[number, number]>([70, 250]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([70, 1000]);
 
   const categories = [
     { name: "Accessories", subcategories: ["ShoesAndBags", "Jewelry"] },
@@ -137,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
         <Range
           step={1}
           min={70}
-          max={250}
+          max={1000}
           values={priceRange}
           onChange={(values) => setPriceRange([...values] as [number, number])}
           renderTrack={({ props, children }) => (

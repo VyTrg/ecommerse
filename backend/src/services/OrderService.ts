@@ -1,32 +1,35 @@
 import { DataSource, Repository } from "typeorm";
 import { Order } from "../entity/Order";
-import { OrderItem } from "../entity/OrderItems";
+import { Order_item } from "../entity/Order_item";
 import { AppDataSource } from "../config/datasource";
 import { Order_status } from "../entity/Order_status";
 
 
 export class OrderService {
+  getDataSource() {
+    throw new Error("Method not implemented.");
+  }
   private orderRepository: Repository<Order>;
-  private orderItemRepository: Repository<OrderItem>;
+  private orderItemRepository: Repository<Order_item>;
 
   constructor() {
     this.orderRepository = AppDataSource.getRepository(Order);
-    this.orderItemRepository = AppDataSource.getRepository(OrderItem);
+    this.orderItemRepository = AppDataSource.getRepository(Order_item);
   }
 
-  // Lấy tất cả đơn hàng
-  async getAllOrders(): Promise<Order[]> {
-    return this.orderRepository.find({
-      relations: [
-        "user",
-        "shippingAddress",
-        "shippingMethod",
-        "orderStatus",
-        "orderItems",
+ 
+async getAllOrders(page: number, limit: number) {
+  const offset = (page - 1) * limit;
 
-      ],
-    });
-  }
+  const [orders, totalCount] = await this.orderRepository.findAndCount({
+    skip: offset,
+    take: limit,
+    relations: ["user", "orderStatus"], // thêm quan hệ nếu cần
+    order: { orderDate: "DESC" }
+  });
+
+  return { data: orders, totalCount };
+}
 
   // Lấy đơn hàng theo ID
   async getOrderById(id: number): Promise<Order | null> {
@@ -63,7 +66,7 @@ export class OrderService {
       } = data;
 
       const orderRepo = manager.getRepository(Order);
-      const orderItemRepo = manager.getRepository(OrderItem);
+      const orderItemRepo = manager.getRepository(Order_item);
 
       const orderTotal = order_items.reduce((sum: number, item: any) => {
         const quantity = parseFloat(item.quantity); // quantity là string
@@ -124,7 +127,7 @@ export class OrderService {
   }
 
   // Thêm chi tiết đơn hàng
-  async addOrderItem(orderId: number, orderItemData: Partial<OrderItem>): Promise<OrderItem> {
+  async addOrderItem(orderId: number, orderItemData: Partial<Order_item>): Promise<Order_item> {
     const order = await this.getOrderById(orderId);
     if (!order) throw new Error("Order not found");
 
