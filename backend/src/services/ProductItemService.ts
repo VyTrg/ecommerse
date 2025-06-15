@@ -23,14 +23,28 @@ export class ProductItemService {
 
   async getAllProductItems(): Promise<ProductItem[]> {
     return this.productItemRepository.find({
-      relations: ["product", "size", "color", "images"],
+      relations: [
+        "product",
+        "product.productPromotions",
+        "product.productPromotions.promotion",
+        "size",
+        "color",
+        "images",
+      ],
     });
   }
 
   async getProductItemById(id: number): Promise<ProductItem | null> {
     return this.productItemRepository.findOne({
       where: { id },
-      relations: ["product", "size", "color", "images"],
+      relations: [
+        "product",
+        "product.productPromotions",
+        "product.productPromotions.promotion",
+        "size",
+        "color",
+        "images"
+      ],
     });
   }
 

@@ -16,6 +16,7 @@ type ProductItem = {
     description: string;
     all_rate: number;
     category_id: number;
+    productPromotions?: any[];
   };
 };
 
@@ -75,11 +76,29 @@ const ProductDetail: React.FC = () => {
   const item = product.productItems[0];
   const imageUrl = (img: any) => img?.image_url || '/fallback.jpg';
 
+  // Tính giá mới nếu có discount
+  let discountRate = 0;
+  let newPrice = item.price;
+  if (item.product && item.product.productPromotions) {
+    const now = new Date();
+    const validPromotion = item.product.productPromotions.find(
+      (pp: any) =>
+        pp.promotion &&
+        pp.promotion.discount_rate > 0 &&
+        new Date(pp.promotion.start_at) <= now &&
+        new Date(pp.promotion.end_at) >= now
+    );
+    if (validPromotion) {
+      discountRate = validPromotion.promotion.discount_rate;
+      newPrice = Math.round(item.price * (1 - discountRate));
+    }
+  }
+
   const handleAddToCart = () => {
     addToCart({
       id: item.id,
       name: product.name,
-      price: item.price,
+      price: newPrice,
       image: imageUrl(item.images[0]),
     });
     alert('✔ Sản phẩm đã được thêm vào giỏ hàng');
@@ -113,7 +132,22 @@ const ProductDetail: React.FC = () => {
         <div className="product-details">
         
           <h1>{product.name}</h1>
-          <p className="price">{item.price.toLocaleString()}₫</p>
+          <p className="price">
+            {discountRate > 0 ? (
+              <>
+                <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                  {item.price.toLocaleString()}₫
+                </span>
+                <br />
+                <span style={{ color: '#e44d26', fontWeight: 'bold' }}>
+                  {newPrice.toLocaleString()}₫
+                </span>
+                <span className="sale-badge">SALE</span>
+              </>
+            ) : (
+              <span>{item.price.toLocaleString()}₫</span>
+            )}
+          </p>
           <p className="description">{product.description}</p>
 
           <div className="color-selection">

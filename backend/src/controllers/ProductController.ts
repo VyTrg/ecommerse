@@ -95,17 +95,28 @@ export class ProductController {
           .map((c) => c.id);
       }
 
-      if (!page || !limit) {
-        // Trả về toàn bộ sản phẩm nếu không truyền page/limit
-        const products = await productService.getAllProducts();
-        res.json({ data: products, totalCount: products.length });
-        return;
+      let products: Product[];
+      let totalCount: number;
+
+      if (categoryName && matchedCategoryIds.length === 0) {
+        // Nếu có categoryName nhưng không tìm thấy category ID phù hợp
+        products = [];
+        totalCount = 0;
+      } else if (page && limit) {
+        // Có phân trang và có thể có lọc theo danh mục
+        totalCount = await productService.countProducts(matchedCategoryIds);
+        products = await productService.getProductsPaginated(matchedCategoryIds, offset, limit);
+      } else if (categoryName && matchedCategoryIds.length > 0) {
+        // Không có phân trang nhưng có lọc theo danh mục
+        products = await productService.getProductsByCategoryIds(matchedCategoryIds);
+        totalCount = products.length;
+      } else {
+        // Không có categoryName và không có phân trang, trả về tất cả sản phẩm
+        products = await productService.getAllProducts();
+        totalCount = products.length;
       }
 
-      // Đếm total
-      const totalCount = await productService.countProducts(matchedCategoryIds);
-      // Lấy product có phân trang
-      const products = await productService.getProductsPaginated(matchedCategoryIds, offset, limit);
+      console.log("ProductController - Products before response:", JSON.stringify(products, null, 2));
       res.json({
         data: products,
         totalCount: totalCount
@@ -208,6 +219,7 @@ export class ProductController {
         product.name.toLowerCase().includes(query)
       );
 
+      console.log("ProductController - Search Results before response:", JSON.stringify(filtered, null, 2));
       console.log(`🔎 Search matched ${filtered.length} product(s) with query "${query}"`);
       res.json(filtered);
     } catch (error) {

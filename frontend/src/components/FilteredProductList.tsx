@@ -11,7 +11,11 @@ export type ProductItem = {
   size?: string;
   color?: { name: string };
   images: { image_url?: string }[];
-  product: { name: string; category_id: number };
+  product: {
+    name: string;
+    category_id: number;
+    productPromotions?: any[];
+  };
 };
 
 interface FilteredProductListProps {
@@ -92,12 +96,29 @@ const FilteredProductList: React.FC<FilteredProductListProps> = ({
 
   const handleBuyNow = (item: ProductItem) => {
     const image = item.images?.[0];
-    const imageUrl =  image?.image_url || "/fallback.jpg";
-
+    const imageUrl = image?.image_url || "/fallback.jpg";
+    let discountRate = 0;
+    let newPrice = item.price;
+    let isOnSale = false;
+    if (item.product && item.product.productPromotions) {
+      const now = new Date();
+      const validPromotion = item.product.productPromotions.find(
+        (pp: any) =>
+          pp.promotion &&
+          pp.promotion.discount_rate > 0 &&
+          new Date(pp.promotion.start_at) <= now &&
+          new Date(pp.promotion.end_at) >= now
+      );
+      if (validPromotion) {
+        discountRate = validPromotion.promotion.discount_rate;
+        newPrice = Math.round(item.price * (1 - discountRate));
+        isOnSale = true;
+      }
+    }
     addToCart({
       id: item.id,
       name: item.product.name,
-      price: item.price,
+      price: newPrice,
       image: imageUrl,
     });
     setIsCartOpen(true);
@@ -111,19 +132,44 @@ const FilteredProductList: React.FC<FilteredProductListProps> = ({
         ) : (
           currentItems.map((item) => {
             const image = item.images?.[0];
-            const imageUrl =  image?.image_url || "/fallback.jpg";
+            const imageUrl = image?.image_url || "/fallback.jpg";
+
+            // Tính toán discount
+            let discountRate = 0;
+            let newPrice = item.price;
+            let isOnSale = false;
+
+            if (item.product && item.product.productPromotions) {
+              const now = new Date();
+              const validPromotion = item.product.productPromotions.find(
+                (pp: any) =>
+                  pp.promotion &&
+                  pp.promotion.discount_rate > 0 &&
+                  new Date(pp.promotion.start_at) <= now &&
+                  new Date(pp.promotion.end_at) >= now
+              );
+
+              if (validPromotion) {
+                discountRate = validPromotion.promotion.discount_rate;
+                newPrice = Math.round(item.price * (1 - discountRate));
+                isOnSale = true;
+              }
+            }
 
             return (
-              <ProductCard
-                key={item.id}
-                product={{
-                  id: item.id,
-                  name: item.product.name,
-                  img: imageUrl,
-                  price: item.price,
-                }}
-                onBuy={() => handleBuyNow(item)}
-              />
+              <div className="product-item" key={item.id}>
+                <ProductCard
+                  product={{
+                    id: item.id,
+                    name: item.product.name,
+                    img: imageUrl,
+                    price: item.price,
+                    discountPrice: newPrice,
+                    isOnSale: isOnSale,
+                  }}
+                  onBuy={() => handleBuyNow(item)}
+                />
+              </div>
             );
           })
         )}
