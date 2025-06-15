@@ -142,7 +142,7 @@ const ProductDetail: React.FC = () => {
                 <span style={{ color: '#e44d26', fontWeight: 'bold' }}>
                   {newPrice.toLocaleString()}₫
                 </span>
-                <span className="sale-badge">SALE</span>
+                {/* <span className="sale-badge">SALE</span> */}
               </>
             ) : (
               <span>{item.price.toLocaleString()}₫</span>
@@ -191,9 +191,9 @@ const ProductDetail: React.FC = () => {
         <button className={`tab ${activeTab === 'additional' ? 'active' : ''}`} onClick={() => setActiveTab('additional')}>
           THÔNG TIN BỔ SUNG
         </button>
-        <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+        {/* <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
           ĐÁNH GIÁ (0)
-        </button>
+        </button> */}
       </div>
 
       <div className="tab-content">
@@ -218,9 +218,9 @@ const ProductDetail: React.FC = () => {
             </tbody>
           </table>
         )}
-        {activeTab === 'reviews' && (
+        {/* {activeTab === 'reviews' && (
           <p>Chưa có đánh giá nào.</p>
-        )}
+        )} */}
       </div>
     </div>
   );

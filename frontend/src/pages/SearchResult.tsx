@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/SearchResult.css";
+
+interface ProductPromotion {
+  promotion: {
+    discount_rate: number;
+    start_at: string;
+    end_at: string;
+  };
+}
 
 interface ProductItem {
   price: number;
@@ -13,12 +21,14 @@ interface Product {
   id: number;
   name: string;
   productItems: ProductItem[];
+  productPromotions?: ProductPromotion[];
 }
 
 const API_URL = "http://localhost:3001";
 
 const SearchResult = () => {
   const { search } = useLocation();
+  const navigate = useNavigate();
   const query = new URLSearchParams(search).get("q") || "";
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,6 +58,10 @@ const SearchResult = () => {
       });
   }, [query]);
 
+  const handleProductClick = (productId: number) => {
+    navigate(`/product/${productId}`);
+  };
+
   return (
     <div className="search-result-container">
       <h2 className="title">Search results for: "{query}"</h2>
@@ -65,10 +79,36 @@ const SearchResult = () => {
                 const firstItem = product.productItems?.[0];
                 const firstImage = firstItem?.images?.[0];
                 const imageUrl = firstImage?.image_url?.trim() || "/default.jpg";
-                const price = firstItem?.price;
+                const price = firstItem?.price ?? 0;
+
+                let discountRate = 0;
+                let newPrice = price;
+                let isOnSale = false;
+
+                if (product.productPromotions) {
+                  const now = new Date();
+                  const validPromotion = product.productPromotions.find(
+                    (pp) =>
+                      pp.promotion &&
+                      pp.promotion.discount_rate > 0 &&
+                      new Date(pp.promotion.start_at) <= now &&
+                      new Date(pp.promotion.end_at) >= now
+                  );
+
+                  if (validPromotion) {
+                    discountRate = validPromotion.promotion.discount_rate;
+                    newPrice = Math.round(price * (1 - discountRate));
+                    isOnSale = true;
+                  }
+                }
 
                 return (
-                  <div className="product-card" key={product.id}>
+                  <div
+                    className={`product-card ${isOnSale ? 'sale-product' : ''}`}
+                    key={product.id}
+                    onClick={() => handleProductClick(product.id)}
+                  >
+                    {isOnSale && <div className="sale-badge">SALE</div>}
                     <img
                       src={imageUrl}
                       alt={product.name}
@@ -79,9 +119,20 @@ const SearchResult = () => {
                     />
                     <h3 className="product-name">{product.name}</h3>
                     <p className="product-price">
-                      {typeof price === "number"
-                        ? `${price.toLocaleString()}₫`
-                        : "No price available"}
+                      {isOnSale ? (
+                        <>
+                          <span className="original-price">
+                            {price.toLocaleString()}₫
+                          </span>
+                          <span className="discount-price">
+                            {newPrice.toLocaleString()}₫
+                          </span>
+                        </>
+                      ) : (
+                        <span className="regular-price">
+                          {price.toLocaleString()}₫
+                        </span>
+                      )}
                     </p>
                   </div>
                 );

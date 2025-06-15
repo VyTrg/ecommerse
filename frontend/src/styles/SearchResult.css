@@ -27,10 +27,30 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    border: 1px solid #eee;
   }
   
   .search-result-container .product-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .search-result-container .product-card.sale-product {
+    border: 1px solid #e44d26;
+  }
+  
+  .search-result-container .sale-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #e44d26;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 1;
   }
   
   /* Ảnh sản phẩm */
@@ -53,17 +73,37 @@
   }
   
   /* Giá */
-  .search-result-container .product-card .product-price {
-    color: #2e8b57;
+  .search-result-container .product-price {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin: 8px 0;
+  }
+  
+  .search-result-container .product-price .original-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 14px;
+  }
+  
+  .search-result-container .product-price .discount-price {
+    color: #e44d26;
     font-weight: bold;
-    min-height: 24px;
+    font-size: 18px;
+  }
+  
+  .search-result-container .product-price .regular-price {
+    color: #333;
+    font-weight: bold;
+    font-size: 18px;
   }
   
   /* Nút mua */
   .search-result-container .product-card .buy-btn {
     margin-top: auto;
     padding: 8px 16px;
-    background-color: #2e8b57;
+    background-color: #414141;
     color: white;
     border: none;
     border-radius: 5px;
@@ -80,6 +120,14 @@
   }
   
   .search-result-container .product-card .buy-btn:hover {
-    background-color: #246b46;
+    background-color: #313131;
+  }
+  
+  .search-result-container .product-card .buy-btn.sale-btn {
+    background-color: #e44d26;
+  }
+  
+  .search-result-container .product-card .buy-btn.sale-btn:hover {
+    background-color: #c73e1d;
   }
   
