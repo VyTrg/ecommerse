@@ -268,4 +268,26 @@ export class UserController {
             res.status(500).json({ message: 'Error fetching user', error });
         }
     }
+
+    static async changeInfo(req: Request, res: Response){
+        try {
+            if (!req.body) {
+                res.status(400).json({ message: 'Request body is missing' });
+            }
+            else{
+                const { id, username, email, phone, password, newPassword } = req.body;
+                if (!username || !password || !newPassword) {
+                    res.status(400).json({ message: 'Missing username, password, or new password' });
+                }
+                else{
+                    await userService.changeInfor(id, username, email, phone, password, newPassword);
+                    res.status(204).send('Password changed successfully');
+                }
+            }
+        }
+        catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).json({ message: 'Error fetching user', error });
+        }
+    }
 }

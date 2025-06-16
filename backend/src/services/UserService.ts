@@ -80,5 +80,29 @@ export class UserService {
             where: { username: username, hash_password: password },
         });
     }
+    async changeInfor(id: number, username: string, email: string, phone: string, oldPassword: string, newPassword: string): Promise<boolean> {
+        try {
+            const user = await this.getUserById(id);
+            if (!user) {
+                return false;
+            }
+            if(username || email || phone){
+                await this.userRepository.update(id, {username: username, email: email, phone: phone});
+            }
+            if(oldPassword && newPassword){
+                const isPasswordValid = await bcrypt.compare(oldPassword, user.hash_password);
+                if (!isPasswordValid) {
+                    return false;
+                }
+                const hashedPassword = await bcrypt.hash(newPassword, 10);
+                await this.userRepository.update(id, {hash_password: hashedPassword});
+            }
+
+        }
+        catch (error) {
+            return false;
+        }
+        return true;
+    }
 
 }

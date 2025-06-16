@@ -1,5 +1,5 @@
 .address-page {
-  max-width: 800px;
+  max-width: 1000px;
   margin: auto;
   padding: 20px;
 }
@@ -16,7 +16,7 @@
 }
 
 .address-section {
-  width: 48%;
+  width: 100%;
 }
 
 .address-section h2 {

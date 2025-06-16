@@ -24,7 +24,7 @@ import adminOrderRoutes from "./routes/adminOrderRoutes";
 import cors from "cors";
 import orderRoutes from "./routes/orderRoutes";
 import order_itemRoutes from "./routes/order_itemRoutes";
-
+import addressRoutes from "./routes/addressRoutes";
 
 dotenv.config();
 const app = express();
@@ -43,7 +43,7 @@ app.use(cors({
 }));
 app.use(keycloak.middleware());
 
-app.use("/api/users", keycloak.protect(adminOnly), UserRouter);
+app.use("/api/users", keycloak.protect(isAuthenticated), UserRouter);
 app.use("/api/promotions",promotionRoutes);
 app.use("/api/sizes", sizeRoutes); //get for public
 app.use("/api/user-addresses", keycloak.protect(isAuthenticated),User_addressRoute);
@@ -54,7 +54,7 @@ app.use("/api/product-items", product_itemRoutes);//get for public
 app.use("/api/images", imageRoutes);//get for public
 app.use("/api/categories", categoryRoutes);//get for public
 app.use("/api/orders",orderRoutes);
-
+app.use("/api/addresses", addressRoutes);
 app.use("/api/statistics",keycloak.protect(adminOnly), StatisticsRoutes);
 
 app.use("/api/auth", authRoutes);

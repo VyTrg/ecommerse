@@ -1,80 +1,62 @@
-// import { Request, Response } from "express";
-// import { AppDataSource } from "../config/datasource";
-// //import { AddressService } from "../services/AddressService";
-// import { Address } from "../entity/Address";
-// import { User_address } from "../entity/User_address";
+import { Request, Response } from "express";
+import {AddressService} from "../services/AddressService";
 
-// const addressService = new AddressService();
+const addressService = new AddressService();
+export class AddressController {
 
-// interface AuthenticatedRequest extends Request {
-//     user: {
-//         id: number;
-//     };
-// }
+    static async getAddressesByUserId(req: Request, res: Response) {
+        const userId = parseInt(req.params.userId);
 
-// export class AddressController {
-//     static async getAllAddresses(req: Request, res: Response) {
-//         try {
-//             const userId = (req as AuthenticatedRequest).user.id;
-//             const addresses = await addressService.getUserAddresses(userId);
-//             res.json(addresses);
-//         } catch (error) {
-//             res.status(500).json({ message: "Error fetching addresses", error });
-//         }
-//     }
+        if (isNaN(userId)) {
+            res.status(400).json({ message: "Invalid user ID" });
+        }
 
-//     static async getAddressById(req: Request, res: Response) {
-//         try {
-//             const address = await addressService.getAddressById(parseInt(req.params.id));
-//             if (!address) res.status(404).json({ message: "Address not found" });
-//             else res.json(address);
-//         } catch (error) {
-//             res.status(500).json({ message: "Error fetching address", error });
-//         }
-//     }
+        try {
+            const addressService = new AddressService();
+            const addresses = await addressService.getAddressesByUserId(userId);
+            res.status(200).json(addresses);
+        } catch (error) {
+            console.error("Error fetching addresses:", error);
+            res.status(500).json({ message: "Failed to retrieve addresses" });
+        }
+    }
+    static async create(req: Request, res: Response) {
+        try {
+            const userId = Number(req.body.user_id);
+            if (!userId)  res.status(400).json({ error: "Missing user_id" });
 
-//     static async createAddress(req: Request, res: Response) {
-//         try {
-//             const userId = (req as AuthenticatedRequest).user.id;
-//             const { street_name, city, region, district, country, is_default } = req.body;
-//             const addressData = { street_name, city, region, district, country };
-//             const userAddress = await addressService.addUserAddress(userId, addressData, is_default);
-//             res.status(201).json(userAddress);
-//         } catch (error) {
-//             res.status(500).json({ message: "Error creating address", error });
-//         }
-//     }
+            const address = await addressService.createAddress(userId, req.body);
+            res.status(201).json(address);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to create address" });
+        }
+    }
+    static async update(req: Request, res: Response) {
+        try {
+            const addressId = Number(req.params.id);
+            const updated = await addressService.updateAddress(addressId, req.body);
 
-//     static async updateAddress(req: Request, res: Response) {
-//         try {
-//             const { street_name, city, region, district, country } = req.body;
-//             const addressData = { street_name, city, region, district, country };
-//             const updatedAddress = await addressService.updateAddress(parseInt(req.params.id), addressData);
-//             if (!updatedAddress) res.status(404).json({ message: "Address not found" });
-//             else res.json(updatedAddress);
-//         } catch (error) {
-//             res.status(500).json({ message: "Error updating address", error });
-//         }
-//     }
+            if (!updated) res.status(404).json({ error: "Address not found" });
 
-//     static async deleteAddress(req: Request, res: Response) {
-//         try {
-//             const isDeleted = await addressService.deleteAddress(parseInt(req.params.id));
-//             if (!isDeleted) res.status(404).json({ message: "Address not found" });
-//             else res.status(204).send();
-//         } catch (error) {
-//             res.status(500).json({ message: "Error deleting address", error });
-//         }
-//     }
+            res.json(updated);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to update address" });
+        }
+    }
+    static async delete(req: Request, res: Response) {
+        try {
+            const userId = Number(req.body.user_id);
+            const addressId = Number(req.params.id);
 
-//     static async setDefaultAddress(req: Request, res: Response) {
-//         try {
-//             const userId = (req as AuthenticatedRequest).user.id;
-//             const isSet = await addressService.setDefaultAddress(userId, parseInt(req.params.id));
-//             if (!isSet) res.status(404).json({ message: "Address not found" });
-//             else res.json({ message: "Default address set successfully" });
-//         } catch (error) {
-//             res.status(500).json({ message: "Error setting default address", error });
-//         }
-//     }
-// }
+            const deleted = await addressService.deleteAddress(userId, addressId);
+            if (!deleted) res.status(404).json({ error: "Address not found" });
+
+             res.json({ message: "Address deleted successfully" });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to delete address" });
+        }
+    }
+}

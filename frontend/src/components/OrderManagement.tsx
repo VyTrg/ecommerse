@@ -187,6 +187,7 @@ const OrderManagement: React.FC = () => {
                       value={order.orderStatus?.status ?? ''}
                       onChange={e => updateOrderStatus(order.id, e.target.value)}
                   >
+                    <option value="Preparing">Cancelled</option>
                     <option value="Shipping">Shipping</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>

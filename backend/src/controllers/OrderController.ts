@@ -134,7 +134,7 @@ export class OrderController {
     }
   }
 
-  // Xóa đơn hàng
+
   static async deleteOrder(req: Request, res: Response) {
     try {
       const deleted = await orderService.deleteOrder(parseInt(req.params.id));
@@ -198,4 +198,34 @@ export class OrderController {
       return;
     }
   };
+  static async getOrdersByUserId(req: Request, res: Response) {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    try {
+      const service = new OrderService();
+      const orders = await service.getOrdersByUserId(userId);
+      res.status(200).json(orders);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  static async cancelOrder(req: Request, res: Response) {
+    const orderId = parseInt(req.params.id);
+    if (isNaN(orderId)) res.status(400).json({ message: "Invalid order ID" });
+
+    try {
+      const updatedOrder = await orderService.updateStatus(orderId, 3); // 3 = Canceled
+      if (!updatedOrder) res.status(404).json({ message: "Order not found" });
+
+      res.status(200).json({ message: "Order canceled", order: updatedOrder });
+    } catch (err) {
+      console.error("Cancel order failed:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }

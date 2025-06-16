@@ -10,7 +10,7 @@ router.post('/', OrderController.createOrderWithItems);
 router.put('/:id', OrderController.updateOrder);
 router.delete('/:id', OrderController.deleteOrder);
 router.put('/:id/status', OrderController.updateOrderStatus);
- 
-
+router.get("/user/:userId", OrderController.getOrdersByUserId);
+router.put('/:id/cancel', OrderController.cancelOrder);
 
 export default router;

@@ -53,13 +53,14 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [prodRes, orderRes] = await Promise.all([
+        const [orderRes] = await Promise.all([
           fetch(`http://localhost:3001/api/statistics/products?type=${type}&date=${date}`,{
-            headers: {"Authorization": `Bearer ${sessionStorage.getItem('token')}`}
+
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
           }),
           fetch(`http://localhost:3001/api/statistics/orders?type=${type}&date=${date}`,
               {
-            headers: {"Authorization": `Bearer ${sessionStorage.getItem('token')}`}
+                headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
           }),
         ]);
  

@@ -11,10 +11,11 @@ export class OrderService {
   }
   private orderRepository: Repository<Order>;
   private orderItemRepository: Repository<OrderItem>;
-
+  private statusRepository: Repository<Order_status>;
   constructor() {
     this.orderRepository = AppDataSource.getRepository(Order);
     this.orderItemRepository = AppDataSource.getRepository(OrderItem);
+    this.statusRepository = AppDataSource.getRepository(Order_status);
   }
 
   // Lấy tất cả đơn hàng
@@ -157,5 +158,30 @@ async updateOrderStatusByText(orderId: number, statusText: string): Promise<Orde
 
   return this.orderRepository.save(order);
 }
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    return this.orderRepository.find({
+      where: { user: { id: userId } },
+      relations: ["user", "shippingAddress", "shippingMethod", "orderStatus", "orderItems", "orderItems.productItem"]
+    });
+  }
+  async updateStatus(orderId: number, statusId: number): Promise<Order | null> {
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ["orderStatus", "user", "shippingAddress"],
+    });
 
+    if (!order) return null;
+
+    const status = await this.statusRepository.findOneBy({ id: statusId });
+    if (!status) throw new Error("Order status not found");
+
+    order.orderStatus = status;
+    await this.orderRepository.save(order);
+
+    // Load lại đầy đủ dữ liệu sau khi save
+    return this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ["user", "orderStatus", "shippingAddress"],
+    });
+  }
 }
