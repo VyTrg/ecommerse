@@ -99,41 +99,26 @@ export class ProductPromotionService {
 
     async setDiscount(productId: number, discountRate: number): Promise<void> {
         const now = new Date();
-        // Tìm promotion hiện tại (còn hiệu lực)
-        const productPromotion = await this.productPromotionRepository.findOne({
-            where: { product: { id: productId } },
-            relations: ["promotion"]
-        });
+        
+        // Xóa tất cả promotion cũ của sản phẩm
+        await this.deleteProductPromotions(productId);
 
         if (discountRate > 0) {
-            if (productPromotion && productPromotion.promotion && productPromotion.promotion.end_at > now) {
-                // Cập nhật promotion hiện tại
-                productPromotion.promotion.discount_rate = discountRate;
-                productPromotion.promotion.start_at = now;
-                productPromotion.promotion.end_at = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                await this.promotionRepository.save(productPromotion.promotion);
-            } else {
-        // Tạo promotion mới
-                const product = await this.productRepository.findOne({ where: { id: productId } });
-                const promotion = this.promotionRepository.create({
-                    name: product?.name || "Promotion",
-                    discount_rate: discountRate,
-                    start_at: now,
-                    end_at: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-        });
-                await this.promotionRepository.save(promotion);
-                const newProductPromotion = this.productPromotionRepository.create({
-                    product: { id: productId },
-                    promotion: promotion
-                });
-                await this.productPromotionRepository.save(newProductPromotion);
-            }
-        } else {
-            // discount = 0, kết thúc promotion hiện tại nếu có
-            if (productPromotion && productPromotion.promotion && productPromotion.promotion.end_at > now) {
-                productPromotion.promotion.end_at = now;
-                await this.promotionRepository.save(productPromotion.promotion);
-            }
+            // Tạo promotion mới
+            const product = await this.productRepository.findOne({ where: { id: productId } });
+            const promotion = this.promotionRepository.create({
+                name: product?.name || "Promotion",
+                discount_rate: discountRate,
+                start_at: now,
+                end_at: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+            });
+            await this.promotionRepository.save(promotion);
+            
+            const newProductPromotion = this.productPromotionRepository.create({
+                product: { id: productId },
+                promotion: promotion
+            });
+            await this.productPromotionRepository.save(newProductPromotion);
         }
     }
 
