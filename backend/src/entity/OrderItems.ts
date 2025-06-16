@@ -9,11 +9,11 @@ export class OrderItem {
 
   @ManyToOne(() => Order, order => order.id)
   @JoinColumn({ name: 'order_id' })
-  order!: Order; // sửa lại nếu muốn truy cập order, không dùng order_id
+  order!: Order; 
 
   @ManyToOne(() => ProductItem, productItem => productItem.orderItems)
   @JoinColumn({ name: 'product_item_id' })
-  productItem!: ProductItem; // ✅ sửa từ product_item_id thành productItem
+  productItem!: ProductItem; 
 
   @Column()
   quantity!: string;

@@ -192,18 +192,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
       <hr className="section-divider" />
 
       <h3>SHOP BY COLOR</h3>
-      <div className="color-filter-container">
-        <ul className="color-filter no-bullets">
-          {["Blue", "Dark Blue", "Fuschia", "Gold", "Green", "Light Pink", "Red", "Brown", "Yellow", "Purple"].map(
-            (color) => (
-              <li key={color} onClick={() => updateLocalFilters({ color })}>
-                <span className={`color-box ${color.toLowerCase().replace(/\s/g, "-")}`} />
-                {color}
-              </li>
-            )
-          )}
-        </ul>
-      </div>
+<div className="color-filter-container">
+  <ul className="color-filter no-bullets">
+    {["Blue", "Black", "Green", "Pink", "Red", "Brown", "Yellow", "Purple","White"].map(
+      (color) => (
+        <li
+          key={color}
+          onClick={() =>
+            updateLocalFilters({
+              color: filters.color === color ? undefined : color, // Toggle chọn/bỏ
+            })
+          }
+          className={filters.color === color ? "active" : ""}
+        >
+          <span className={`color-box ${color.toLowerCase().replace(/\s/g, "-")}`} />
+          {color}
+        </li>
+      )
+    )}
+  </ul>
+</div>
+
 
       {filters.category && (
         <>

@@ -290,22 +290,22 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
-          <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
+          <h3>{editingProduct ? 'Edit products' : 'Add new products'}</h3>
 
 
-          <label>Tên sản phẩm:
+          <label>Product name:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
           </label>
 
-          <label>Giá:
+          <label>Price:
             <input type="number" name="price" value={formData.price} onChange={handleNumberChange('price')} />
           </label>
 
-          <label>Số lượng:
+          <label>Quantity:
             <input type="number" name="quantity" value={formData.quantity} onChange={handleNumberChange('quantity')} />
           </label>
 
-          <label>Giảm giá (%):
+          <label>Discount(%):
             <input
               type="number"
               name="discount"
@@ -317,7 +317,7 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
             />
           </label>
 
-          <label>Thêm ảnh:
+          <label>Add images:
             <input type="file" accept="image/*" multiple onChange={handleFileChange} />
           </label>
 
@@ -363,14 +363,14 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
             ))}
           </div>
 
-          <label>Mô tả:
+          <label>Description:
 
             <textarea
               name="description"
               rows={3}
               value={formData.description}
               onChange={handleInputChange}
-              style={{ resize: "none", overflow: "auto", height: "50px", width: "100%" }}
+              style={{ resize: "none", overflow: "auto", height: "150px", width: "100%" }}
             />
           </label>
 
@@ -530,7 +530,7 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
               });
               setEditingProduct(null);
               setShowForm(true);
-            }}>+ Thêm sản phẩm</button>
+            }}>+ Add new products</button>
           </div>
         </>
       )}
