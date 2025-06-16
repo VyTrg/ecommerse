@@ -1,205 +1,66 @@
-import { Request, Response } from "express";
-import { AppDataSource } from "../config/datasource";
+import { Request, Response, RequestHandler } from "express";
 import { OrderService } from "../services/OrderService";
+import { AppDataSource } from "../config/datasource";
 import { Order } from "../entity/Order";
-import { ProductItem } from "../entity/ProductItem";
 import { User } from "../entity/User";
 import { Address } from "../entity/Address";
-import { Shipping_method } from "../entity/ShippingMethod";
+// import { Shipping_method } from "../entity/Shipping_method";
 import { Order_status } from "../entity/Order_status";
+import { ProductItem } from "../entity/ProductItem";
 
 const orderService = new OrderService();
 
 export class OrderController {
-static async getAllOrders(req: Request, res: Response): Promise<void> {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
-
-    const [orders, totalCount] = await AppDataSource.getRepository(Order).findAndCount({
-      skip,
-      take: limit,
-      order: { orderDate: "DESC" },
-      relations: ["user", "orderItems", "orderItems.productItem"]
-    });
-
-    
-res.json({
-  data: orders,
-  totalCount
-});
-
-  } catch (error) {
-    console.error("❌ Error fetching orders:", error);
-    res.status(500).json({ message: "Error fetching orders", error });
-  }
-}
-
-
-  static async getOrderById(req: Request, res: Response): Promise<void> {
+  // Lấy tất cả đơn hàng có phân trang
+  static async getAllOrders(req: Request, res: Response): Promise<void> {
     try {
-      const order = await AppDataSource.getRepository(Order).findOne({
-        where: { id: parseInt(req.params.id) },
-        relations: [
-          "user",
-          "shippingAddress",
-          "shippingMethod",
-          "orderStatus",
-          "orderItems",
-          "orderItems.productItem",
-          "orderItems.productItem.images",
-           "orderItems.productItem.product", 
-        ],
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const [orders, totalCount] = await AppDataSource.getRepository(Order).findAndCount({
+        skip,
+        take: limit,
+        order: { orderDate: "DESC" },
+        relations: ["user", "orderItems", "orderItems.productItem"]
       });
 
+      res.json({ data: orders, totalCount });
+    } catch (error) {
+      console.error("❌ Error fetching orders:", error);
+      res.status(500).json({ message: "Error fetching orders", error });
+    }
+  }
+
+  // Lấy đơn hàng theo ID
+  static async getOrderById(req: Request, res: Response) {
+    try {
+      const order = await orderService.getOrderById(parseInt(req.params.id));
       if (!order) {
         res.status(404).json({ message: "Order not found" });
-        return;
+      } else {
+        res.json(order);
       }
-
-      res.json(order);
     } catch (error) {
-      console.error("Error fetching order:", error);
+      console.error("[OrderController.getOrderById] error:", error);
       res.status(500).json({ message: "Error fetching order", error });
     }
   }
 
-  static async createOrder(req: Request, res: Response): Promise<void> {
+  // Tạo đơn hàng với danh sách items
+  static async createOrder(req: Request, res: Response) {
     try {
-      const order = await orderService.createOrder(req.body);
+      const order = await orderService.createOrderWithItems(req.body);
       res.status(201).json(order);
     } catch (error) {
-      res.status(500).json({ message: "Error creating order", error });
+      res.status(500).json({ message: "Error creating order with items", error });
     }
   }
-static async createOrderWithItems(req: Request, res: Response): Promise<void> {
-  console.log("📥 REQ BODY", JSON.stringify(req.body, null, 2));
 
-  try {
-      console.log("📥 REQ BODY", JSON.stringify(req.body, null, 2));
-
-    const {
-      user_id,
-      shipping_address_id,
-      shipping_method_id,
-      order_status_id,
-      order_total,
-      order_items,
-      guest_info,
-    } = req.body;
-
-    const userRepo = AppDataSource.getRepository(User);
-    const addressRepo = AppDataSource.getRepository(Address);
-    const shippingRepo = AppDataSource.getRepository(Shipping_method);
-    const statusRepo = AppDataSource.getRepository(Order_status);
-    const productItemRepo = AppDataSource.getRepository(ProductItem);
-
-    let user: User | undefined;
-    let address: Address | null = null;
-
-    const order = new Order();
-
-    if (user_id) {
-      user = await userRepo.findOneBy({ id: user_id }) ?? undefined;
-      address = await addressRepo.findOneBy({ id: shipping_address_id });
-
-      console.log("👤 [User found]:", user);
-      console.log("🏠 [User Address found]:", address);
-
-      if (!user) {
-        throw new Error("User not found");
-      }
-
-      order.user = user;
-    } 
-    
-    else if (guest_info) {
-      address = addressRepo.create({
-        street_name: guest_info.street_name,
-        city: guest_info.city,
-        region: guest_info.region,
-        district: guest_info.district,
-        country: guest_info.country,
-      });
-
-      await addressRepo.save(address);
-
-      console.log("👤 [Guest info]:", guest_info);
-      console.log("🏠 [Guest Address saved]:", address);
-
-      order.guest_name = guest_info.guest_name;
-      order.guest_email = guest_info.guest_email;
-      order.guest_phone = guest_info.guest_phone;
-    }
-
-    // 🚚 Phương thức giao hàng và trạng thái
-    const shippingMethod = await shippingRepo.findOneBy({ id: parseInt(shipping_method_id) });
-    const orderStatus = await statusRepo.findOneBy({ id: parseInt(order_status_id) });
-
-    console.log("🚚 [Shipping Method]:", shippingMethod);
-    console.log("📌 [Order Status]:", orderStatus);
-
-    if (!shippingMethod) throw new Error("Shipping method not found");
-    if (!orderStatus) throw new Error("Order status not found");
-
-    order.shippingAddress = address!;
-    order.shippingMethod = shippingMethod;
-    order.orderStatus = orderStatus;
-    order.order_total = order_total;
-
-    
-    order.user = user ?? null;
-    order.shippingAddress = address ?? null;
-    order.shippingMethod = shippingMethod ?? null;
-    order.orderStatus = orderStatus ?? null;
-
-    console.log("[Order before save]:", order);
-
-    const newOrder = await AppDataSource.getRepository(Order).save(order);
-    console.log(" [Order saved]:", newOrder);
-
-    const createdItems = [];
-
-    for (const item of order_items) {
-      const productItem = await productItemRepo.findOne({
-        where: { id: item.product_item_id },
-        relations: ["product", "color", "size", "images"], 
-      });
-
-      console.log(" [ProductItem]:", productItem);
-
-      if (!productItem) continue;
-
-      const orderItem = await orderService.addOrderItem(newOrder.id, {
-        productItem,
-        quantity: item.quantity,
-        price: item.price,
-      });
-
-      console.log("[OrderItem created]:", orderItem);
-      createdItems.push(orderItem);
-    }
-
-    res.status(201).json({
-      message: "Tạo đơn hàng thành công",
-      order: newOrder,
-      order_items: createdItems,
-    });
-  } catch (error) {
-    console.error(" Lỗi khi tạo đơn hàng:", error);
-    res.status(500).json({ message: "Lỗi khi tạo đơn hàng", error });
-  }
-}
-
-
-
-  static async updateOrder(req: Request, res: Response): Promise<void> {
+  // Cập nhật đơn hàng
+  static async updateOrder(req: Request, res: Response) {
     try {
-      const updatedOrder = await orderService.updateOrder(
-        parseInt(req.params.id),
-        req.body
-      );
+      const updatedOrder = await orderService.updateOrder(parseInt(req.params.id), req.body);
       if (!updatedOrder) {
         res.status(404).json({ message: "Order not found" });
       } else {
@@ -210,7 +71,8 @@ static async createOrderWithItems(req: Request, res: Response): Promise<void> {
     }
   }
 
-  static async deleteOrder(req: Request, res: Response): Promise<void> {
+  // Xoá đơn hàng
+  static async deleteOrder(req: Request, res: Response) {
     try {
       const deleted = await orderService.deleteOrder(parseInt(req.params.id));
       if (!deleted) {
@@ -223,24 +85,91 @@ static async createOrderWithItems(req: Request, res: Response): Promise<void> {
     }
   }
 
-  static async addOrderItem(req: Request, res: Response): Promise<void> {
+  // Thêm một item vào đơn hàng có sẵn
+  static async addOrderItem(req: Request, res: Response) {
     try {
-      const orderItem = await orderService.addOrderItem(
-        parseInt(req.params.id),
-        req.body
-      );
+      const orderItem = await orderService.addOrderItem(parseInt(req.params.id), req.body);
       res.status(201).json(orderItem);
     } catch (error) {
       res.status(500).json({ message: "Error adding order item", error });
     }
   }
+
+  // Đếm tổng số đơn hàng
   static async getOrdersCount(req: Request, res: Response) {
     try {
-      const count= await orderService.getOrderCount();
-      
+      const count = await orderService.getOrderCount();
       res.json({ count });
     } catch (error) {
       res.status(500).json({ message: "Error counting Order", error });
     }
   }
+
+  // Cập nhật trạng thái đơn hàng (Shipping, Delivered, Cancelled)
+  static updateOrderStatus: RequestHandler = async (req, res, next) => {
+    try {
+      const orderId = parseInt(req.params.id, 10);
+      const { status } = req.body;
+
+      if (typeof status !== "string") {
+        res.status(400).json({ message: "Missing or invalid 'status' in body" });
+        return;
+      }
+
+      const updatedOrder = await orderService.updateOrderStatusByText(orderId, status);
+
+      if (!updatedOrder) {
+        res.status(404).json({ message: "Order not found" });
+        return;
+      }
+
+      res.json({ message: "Order status updated", order: updatedOrder });
+    } catch (error: any) {
+      if (error.message === "Invalid status text") {
+        res.status(400).json({ message: "Invalid status value" });
+        return;
+      }
+      console.error("[OrderController.updateOrderStatus] ERROR:", error);
+      res.status(500).json({ message: "Error updating order status", error });
+    }
+  };
+
+  // Lấy danh sách đơn theo user
+  static async getOrdersByUserId(req: Request, res: Response) {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      res.status(400).json({ message: "Invalid user ID" });
+      return;
+    }
+
+    try {
+      const orders = await orderService.getOrdersByUserId(userId);
+      res.status(200).json(orders);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // Hủy đơn hàng
+  static async cancelOrder(req: Request, res: Response) {
+    const orderId = parseInt(req.params.id);
+    if (isNaN(orderId)) {
+      res.status(400).json({ message: "Invalid order ID" });
+      return;
+    }
+
+    try {
+      const updatedOrder = await orderService.updateStatus(orderId, 3); // 3 = Canceled
+      if (!updatedOrder) {
+        res.status(404).json({ message: "Order not found" });
+        return;
+      }
+      res.status(200).json({ message: "Order canceled", order: updatedOrder });
+    } catch (err) {
+      console.error("Cancel order failed:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+  
 }

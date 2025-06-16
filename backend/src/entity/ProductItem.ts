@@ -6,7 +6,6 @@ import { Color } from "./Color";
 import { Cart_item } from "./CartItem";
 import { OrderItem } from "./OrderItems"; 
 
-
 @Entity()
 export class ProductItem {
   @PrimaryGeneratedColumn()

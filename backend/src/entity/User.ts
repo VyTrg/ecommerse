@@ -6,9 +6,10 @@ import { Order } from "./Order";
 export class User {
   @PrimaryGeneratedColumn()
   id!: number;
+@Column({ name: 'keycloak_id', type: "nvarchar", length: 255, nullable: false, default: '' })
+keycloakId!: string;
 
-  @Column({name: 'keycloak_id'})
-  keycloakId!: string;
+
 
   @Column()
   username!: string;

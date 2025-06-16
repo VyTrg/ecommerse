@@ -72,6 +72,7 @@ export class ProductController {
 
 
   static getAllProducts = async (req: Request, res: Response): Promise<void> => {
+
     try {
       const categoryName = req.query.category?.toString().toLowerCase();
       const page = req.query.page ? parseInt(req.query.page as string) : null;
@@ -80,6 +81,7 @@ export class ProductController {
 
       const categoryRepo = AppDataSource.getRepository(Category);
       let matchedCategoryIds: number[] = [];
+
 
       if (categoryName) {
         const allCategories = await categoryRepo.find({ relations: ["parent"] });

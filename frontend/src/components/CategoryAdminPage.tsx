@@ -114,7 +114,7 @@ const CategoryAdminPage: React.FC = () => {
   const handleUpdate = () => {
     fetch(`http://localhost:3001/api/categories/${editingId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
       body: JSON.stringify({ name: editingName }),
     }).then(() => window.location.reload());
   };
@@ -123,6 +123,7 @@ const CategoryAdminPage: React.FC = () => {
     if (window.confirm("Bạn có chắc chắn xoá?")) {
       fetch(`http://localhost:3001/api/categories/${id}/delete`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
       }).then(() => window.location.reload());
     }
   };
@@ -243,7 +244,7 @@ const CategoryAdminPage: React.FC = () => {
           style={{ padding: "8px", flex: "1 1 200px" }}
         >
           <option value="">Không có danh mục cha</option>
-          {flatCategories.map((cat) => (
+          {flatCategories.filter(cat => cat.parent == null).map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import AccessoriesPage from "./pages/AccessoriesPage";
@@ -12,7 +12,7 @@ import MyAccount from "./pages/MyAccount";
 import ItemPage from "./pages/ItemPage";
 import LoginSection from "./pages/LoginSection";
 import RegisterSection from "./pages/RegisterSection";
-import ShoppingCartPopup from "./components/ShoppingCartPopup";
+
 import ForgotPassword from "./components/ForgotPassword";
 import ProductManagement from "./components/ProductManagement";
 import OrderManagement from "./components/OrderManagement";
@@ -22,12 +22,13 @@ import { CartProvider } from "./contexts/CartContext";
 import CartPopupWrapper from "./components/CartPopupWrapper"; 
 import "./assets/themify-icons/themify-icons.css";
 import CheckoutPage from "./pages/CheckoutPage";
-import CategoryPage from "./pages/CategoryPage";
+
 import AdminLayout from "./components/AdminLayout";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryAdminPage from "./components/CategoryAdminPage";
 import AdminDashboard from "./pages/Dashboard";
 import UserManagement from "./components/Usermanangement";
+import OrderDetailPage from "./pages/OrderDetail";
 
 const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
@@ -40,7 +41,7 @@ const App = () => {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/category/:id" element={<CategoryPage />} />
+          {/* <Route path="/category/:id" element={<CategoryPage />} /> */}
 
           <Route path="/clothing" element={<ClothingPage />} />
           <Route path="/swimwear" element={<Swimwear />} />
@@ -65,8 +66,11 @@ const App = () => {
             <Route path="products" element={<ProductManagement />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="orders" element={<OrderManagement />} />
-            <Route path="orders/:id" element={<OrderDetails />} />  {/* 🟢 Thêm chi tiết admin */}
+            <Route path="orders/:id" element={<OrderDetails />} />  {/* Thêm chi tiết admin */}
             <Route path="categories" element={<CategoryAdminPage />} />
+
+            <Route path="/admin/orders/:id" element={<OrderDetailPage />} />
+
           </Route>
         </Routes>
 

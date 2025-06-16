@@ -7,7 +7,9 @@ export class OrderItem {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => Order, order => order.orderItems)
+  @ManyToOne(() => Order, order => order.orderItems, {
+    onDelete: "CASCADE"
+  })
   @JoinColumn({ name: "order_id" })
   order!: Order;
 
@@ -15,9 +17,9 @@ export class OrderItem {
   @JoinColumn({ name: "product_item_id" })
   productItem!: ProductItem;
 
-  @Column()
-  quantity!: string;
+  @Column({ type: "decimal", precision: 10, scale: 2, default: 1, nullable: false })
+  quantity!: number;
 
-  @Column()
-  price!: string;
+  @Column({ type: "decimal", precision: 10, scale: 2, default: 0, nullable: false })
+  price!: number;
 }
