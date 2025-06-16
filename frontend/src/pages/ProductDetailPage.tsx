@@ -98,7 +98,7 @@ const ProductDetail: React.FC = () => {
     addToCart({
       id: item.id,
       name: product.name,
-      price: newPrice,
+      price: discountRate > 0 ? newPrice : item.price,
       image: imageUrl(item.images[0]),
     });
     alert('✔ Sản phẩm đã được thêm vào giỏ hàng');
@@ -145,7 +145,9 @@ const ProductDetail: React.FC = () => {
                 {/* <span className="sale-badge">SALE</span> */}
               </>
             ) : (
-              <span>{item.price.toLocaleString()}₫</span>
+              <span style={{ color: '#333', fontWeight: 'bold' }}>
+                {item.price.toLocaleString()}₫
+              </span>
             )}
           </p>
           <p className="description">{product.description}</p>

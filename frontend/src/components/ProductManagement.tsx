@@ -207,16 +207,15 @@ const ProductManagement = () => {
           });
         }
 
-        if (formData.discount > 0) {
-          await fetch('http://localhost:3001/api/product-promotions/set-discount', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              product_id: editingProduct.id,
-              discount_rate: formData.discount / 100
-            })
-          });
-        }
+        // Luôn gọi API set discount, kể cả khi discount = 0
+        await fetch('http://localhost:3001/api/product-promotions/set-discount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: editingProduct.id,
+            discount_rate: formData.discount / 100
+          })
+        });
       } else {
         // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
