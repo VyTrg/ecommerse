@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import bcrypt from "bcrypt";
+import {getAccessToken} from "../middleware/keycloakToken";
+import {createCookie} from "react-router";
 
 interface RegisterRequestBody {
   username: string;
@@ -13,7 +15,16 @@ interface LoginRequestBody {
   username: string;
   password: string;
 }
-
+function decodeToken(token: string) {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedPayload = atob(payloadBase64);
+    return JSON.parse(decodedPayload);
+  } catch (error) {
+    console.error("Failed to decode token:", error);
+    return null;
+  }
+}
 
 export const register = async (
   req: Request<{}, {}, RegisterRequestBody>,
@@ -41,17 +52,39 @@ export const login = async (
   const { username, password } = req.body;
 
   try {
-    const user = await AuthService.login(username, password);
+    const [accessToken, refreshToken] = await getAccessToken(username, password);
 
-    res.status(200).json({
-      status: "success",
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-      },
-    });
+    let isAdmin = false;
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+    })
+    if (accessToken) {
+      const decoded = decodeToken(accessToken);
+      const roles = decoded?.resource_access?.['express-api']?.roles || [];
+      isAdmin = roles.includes('admin');
+    }
+    if(isAdmin){
+      res.status(200).json({
+        status: "success",
+        accessToken: accessToken,
+      });
+    }
+    else{
+      const user = await AuthService.login(username, password);
+
+      res.status(200).json({
+        status: "success",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+        },
+        accessToken: accessToken,
+      });
+    }
   } catch (error: any) {
     res.status(401).json({
       status: "error",

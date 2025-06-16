@@ -1,11 +1,10 @@
-// ... các import giữ nguyên ...
 import React, { useEffect, useState } from 'react';
 import '../styles/ProductManagement.css';
-import Pagination from '../components/Pagination';
 
 type ProductItem = {
   id: number;
   price: number;
+  quantity: number;
   images: { image_url: string }[];
 };
 
@@ -20,31 +19,50 @@ type Product = {
 type Category = {
   id: number;
   name: string;
-  parent_id: number | null;
+  parent: number | null;
+};
+
+type FormDataType = {
+  name: string;
+  price: string | number;
+  quantity: string | number;
+  images: string[];
+  category_id: number;
+  description: string;
 };
 
 const ProductManagement = () => {
-  const [page, setPage] = useState(1);
-  const limit = 10;
-
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataType>({
     name: '',
-    price: 0,
-    image: '',
+    price: '',
+    quantity: '',
+    images: [],
     category_id: 0,
     description: '',
   });
 
-  useEffect(() => {
-    fetch('http://localhost:3001/api/products')
-      .then(res => res.json())
-      .then(data => setProducts(data))
-      .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const [totalCount, setTotalCount] = useState(0);
+  const totalPages = Math.ceil(totalCount / limit);
 
+  const loadProducts = () => {
+    fetch(`http://localhost:3001/api/products?page=${page}&limit=${limit}`)
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data.data);
+        setTotalCount(data.totalCount);
+      })
+      .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
+  };
+
+  useEffect(() => { loadProducts(); }, [page]);
+
+  useEffect(() => {
     fetch('http://localhost:3001/api/categories')
       .then(res => res.json())
       .then(data => setCategories(data))
@@ -58,50 +76,87 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' , headers:{'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''}})
         .then(res => {
-          if (res.ok) setProducts(prev => prev.filter(p => p.id !== id));
+          if (res.ok) loadProducts();
         })
         .catch(err => console.error('Lỗi xoá sản phẩm:', err));
     }
-  };
-
-  const handleCategoryChange = (productId: number, newCategoryId: number) => {
-    fetch(`http://localhost:3001/api/products/${productId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category_id: newCategoryId }),
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Lỗi cập nhật danh mục');
-        setProducts(prev =>
-          prev.map(p =>
-            p.id === productId ? { ...p, category_id: newCategoryId } : p
-          )
-        );
-      })
-      .catch(err => console.error('Lỗi khi đổi danh mục:', err));
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      price: product.productItems?.[0]?.price || 0,
-      image: product.productItems?.[0]?.images?.[0]?.image_url|| '',
+      price: product.productItems?.[0]?.price ?? '',
+      quantity: product.productItems?.[0]?.quantity ?? '',
+      images: product.productItems?.[0]?.images?.map(img => img.image_url) || [],
       category_id: product.category_id,
       description: product.description || '',
     });
     setShowForm(true);
   };
+  console.log(categories)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleNumberChange = (name: 'price' | 'quantity') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value === '' ? '' : Math.max(0, parseFloat(value)),
+    }));
+  };
+
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const files = Array.from(e.target.files);
+
+    for (const file of files) {
+      
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const formDataUpload = new FormData();
+          formDataUpload.append('image', file);
+
+          const res = await fetch('http://localhost:3001/api/upload', {
+            method: 'POST',
+            body: formDataUpload,
+          });
+
+          const data = await res.json();
+
+          // Chỉ lưu đường dẫn server trả về
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, data.url],
+          }));
+        } catch (err) {
+          console.error('Lỗi khi upload ảnh:', err);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleFormSubmit = async () => {
     try {
+      if (!formData.price || !formData.quantity || formData.images.length === 0) {
+        alert("Vui lòng nhập giá, số lượng và ít nhất 1 hình ảnh.");
+        return;
+      }
+
       if (editingProduct) {
-        // Cập nhật sản phẩm
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -109,36 +164,24 @@ const ProductManagement = () => {
           }),
         });
 
-        // Cập nhật productItem
         const productItemId = editingProduct.productItems?.[0]?.id;
+
         if (productItemId) {
-          const currentImage = editingProduct.productItems?.[0]?.images?.[0]?.image_url || '';
-          const updateBody: any = {
-            price: formData.price,
-            product_id: editingProduct.id,
-          };
-
-          if (formData.image && formData.image !== currentImage) {
-            updateBody.images = [{ cloudinary_url: formData.image }];
-          }
-
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateBody),
+            headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+            body: JSON.stringify({
+              price: formData.price,
+              quantity: formData.quantity,
+              product_id: editingProduct.id,
+              images: formData.images.map(url => ({ image_url: url })),
+            }),
           });
         }
-
-        const updatedRes = await fetch(`http://localhost:3001/api/products`);
-        const updatedList = await updatedRes.json();
-        setProducts(updatedList);
-        setShowForm(false);
-        setEditingProduct(null);
       } else {
-        // Thêm sản phẩm mới
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -150,193 +193,174 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' ,'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             price: formData.price,
-            images: [{ cloudinary_url: formData.image }],
+            quantity: formData.quantity,
             product_id: newProduct.id,
+            images: formData.images.map(url => ({ image_url: url })),
           }),
         });
-
-        const refreshedRes = await fetch(`http://localhost:3001/api/products`);
-        const refreshedList = await refreshedRes.json();
-        setProducts(refreshedList);
-        setShowForm(false);
       }
+
+      loadProducts();
+      setShowForm(false);
+      setEditingProduct(null);
+
     } catch (err) {
       console.error('Lỗi khi lưu sản phẩm:', err);
     }
   };
-  const totalCount = products.length;
-  const totalPages = Math.ceil(totalCount / limit);
-  const start = (page - 1) * limit;
-  const currentProducts = products.slice(start, start + limit);
+
   return (
     <div className="product-table-container">
-      {showForm && (
+      {showForm ? (
         <div className="form-popup">
           <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
-          <label>
-            Product Name:
-            <input
-              type="text"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-            />
+
+          <label>Tên sản phẩm:
+            <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
           </label>
-          <label>
-            Price:
-            <input
-              type="number"
-              value={formData.price}
-              onChange={e =>
-                setFormData({ ...formData, price: Number(e.target.value) })
-              }
-            />
+
+          <label>Giá:
+            <input type="number" name="price" value={formData.price} onChange={handleNumberChange('price')} />
           </label>
-          <label>
-            Image (URL):
-            <input
-              type="text"
-              value={formData.image}
-              onChange={e =>
-                setFormData({ ...formData, image: e.target.value })
-              }
-            />
+
+          <label>Số lượng:
+            <input type="number" name="quantity" value={formData.quantity} onChange={handleNumberChange('quantity')} />
           </label>
-          <label>
-            Description:
+
+          <label>Thêm ảnh:
+            <input type="file" accept="image/*" multiple onChange={handleFileChange} />
+          </label>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 8 }}>
+            {formData.images.map((img, idx) => (
+              <div key={idx} style={{
+                position: 'relative', margin: 4, border: '1px solid #ddd',
+                borderRadius: 8, overflow: 'hidden', width: 100, height: 100,
+              }}>
+                <img src={img} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button
+  style={{
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    background: 'rgba(0,0,0,0.6)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50%',
+    width: 24,
+    height: 24,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 14,
+  }}
+  onClick={() => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx)
+    }));
+  }}
+>
+  ×
+</button>
+              </div>
+            ))}
+          </div>
+
+          <label>Mô tả:
             <textarea
+              name="description"
               rows={3}
               value={formData.description}
-              onChange={e =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="Mô tả sản phẩm"
+              onChange={handleInputChange}
+              style={{ resize: "none", overflow: "auto", height: "50px", width: "100%" }}
             />
           </label>
-          <label>
-            Category:
-            <select
-              value={formData.category_id}
-              onChange={e =>
-                setFormData({
-                  ...formData,
-                  category_id: Number(e.target.value),
-                })
-              }
-            >
-              <option value="">-- Select Category --</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
+
+          <label>Danh mục:
+            <select name="category_id" value={formData.category_id} onChange={handleInputChange}>
+              <option value="">-- Chọn danh mục --</option>
+              {categories?.filter(cat => cat.parent !== null)
+                  .map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </label>
+
           <div style={{ marginTop: '10px' }}>
-            <button className="btn-edit" onClick={handleFormSubmit}>
-              Save
-            </button>
-            <button className="btn-delete" onClick={() => setShowForm(false)}>
-              Cancel
-            </button>
+            <button className="btn-edit" onClick={handleFormSubmit}>Lưu</button>
+            <button className="btn-delete" onClick={() => setShowForm(false)}>Huỷ</button>
           </div>
         </div>
-      )}
-
-      {!showForm && (
+      ) : (
         <>
           <table className="product-table">
             <thead>
               <tr>
-                <th>No.</th>
-                <th>Product Name</th>
-                <th>Price</th>
-                <th>Category</th>
-                <th>Edit Category</th>
-                <th>Image</th>
-                <th>Action</th>
+                <th>STT</th>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Danh mục</th>
+                <th>Ảnh</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
-              {currentProducts.map((p, index) => (
+              {products.map((p, index) => (
                 <tr key={p.id}>
-                  <td style={{ textAlign: 'center' }}>{start + index + 1}</td>
-                  <td>{p.name || 'Không có tên'}</td>
-                  <td>
-                    {p.productItems?.[0]?.price
-                      ? `${p.productItems[0].price.toLocaleString()}₫`
-                      : 'Không rõ'}
-                  </td>
+                  <td>{(page - 1) * limit + index + 1}</td>
+                  <td>{p.name}</td>
+                  <td>{p.productItems?.[0]?.price ? `${p.productItems[0].price.toLocaleString()}₫` : 'Không rõ'}</td>
+                  <td>{p.productItems?.[0]?.quantity ?? 'Không rõ'}</td>
                   <td>{getCategoryName(p.category_id)}</td>
                   <td>
-                    <select
-                      value={p.category_id}
-                      onChange={e =>
-                        handleCategoryChange(p.id, Number(e.target.value))
-                      }
-                    >
-                      <option value="">-- Chọn danh mục --</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    {p.productItems?.[0]?.images?.[0]?.image_url ? (
-                      <img
-                        src={p.productItems[0].images[0].image_url}
-                        alt={p.name}
-                        width={60}
-                        height={60}
-                      />
+                    {p.productItems?.[0]?.images?.length ? (
+                      p.productItems[0].images.map((img, idx) => (
+                        <img key={idx} src={img.image_url} alt={p.name} width={60} style={{ margin: 4 }} />
+                      ))
                     ) : (
-                      <span>No Image</span>
+                      <span>Không có ảnh</span>
                     )}
                   </td>
                   <td>
-                    <button className="btn-edit" onClick={() => handleEdit(p)}>
-                      Edit
-                    </button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(p.id)}
-                    >
-                      Delete
-                    </button>
+                    <button className="btn-edit" onClick={() => handleEdit(p)}>Sửa</button>
+                    <button className="btn-delete" onClick={() => handleDelete(p.id)}>Xoá</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <div style={{ textAlign: 'center', marginTop: '24px' }}>
-            {totalPages > 1 && (
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onChange={setPage}
-              />
-            )}
-            <button
-              className="btn-add"
-              onClick={() => {
-                setFormData({
-                  name: '',
-                  price: 0,
-                  image: '',
-                  category_id: categories[0]?.id || 0,
-                  description: '',
-                });
-                setEditingProduct(null);
-                setShowForm(true);
-              }}
-            >
-              + Add Product
-            </button>
+          {totalPages > 1 && (
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                <button key={pageNumber}
+                  style={{
+                    margin: 4, padding: '8px 12px',
+                    backgroundColor: pageNumber === page ? '#333' : '#eee',
+                    color: pageNumber === page ? '#fff' : '#000',
+                    border: 'none', borderRadius: 4, cursor: 'pointer',
+                  }}
+                  onClick={() => setPage(pageNumber)}>{pageNumber}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <button className="btn-add" onClick={() => {
+              setFormData({
+                name: '', price: '', quantity: '', images: [],
+                category_id: categories[0]?.id || 0, description: ''
+              });
+              setEditingProduct(null);
+              setShowForm(true);
+            }}>+ Thêm sản phẩm</button>
           </div>
         </>
       )}

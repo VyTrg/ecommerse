@@ -161,7 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
                 height: "20px",
                 width: "20px",
                 borderRadius: "50%",
-                backgroundColor: "#000",
+                backgroundColor: "white",
                 border: "2px solid white",
                 ...props.style,
               }}

@@ -32,4 +32,19 @@
   .btn-add:hover {
     background-color: #388e3c;
   }
-  
+
+.back-button {
+  background-color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+  margin-left: 20px;
+}
+
+.back-button:hover {
+  background-color: #ddd;
+}

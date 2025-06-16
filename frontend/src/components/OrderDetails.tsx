@@ -18,7 +18,7 @@ const OrderDetails: React.FC = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const res = await fetch(`http://localhost:3001/api/orders/${id}`);
+        const res = await fetch(`http://localhost:3001/admin/api/orders/${id}`);
         const data = await res.json();
         setOrder(data);
       } catch (err) {
@@ -40,7 +40,8 @@ const OrderDetails: React.FC = () => {
       name: item.productItem?.product?.name || "Không rõ",
       quantity: parseInt(item.quantity),
       price: parseFloat(item.price),
-      image: item.productItem?.image?.image_url || "",
+      // Fix chỗ image đúng relations bạn đang trả về:
+      image: item.productItem?.images?.[0]?.image_url || "", 
     })) || [];
 
   const fullAddress =
@@ -52,38 +53,16 @@ const OrderDetails: React.FC = () => {
       <h2>Đơn hàng #{order.id}</h2>
 
       <div className="order-info">
-        <p>
-          <strong>Ngày đặt:</strong>{" "}
-          {new Date(order.orderDate).toLocaleString()}
-        </p>
-        <p>
-          <strong>Trạng thái:</strong>{" "}
-          {order.orderStatus?.name || "Không rõ"}
-        </p>
-        <p>
-          <strong>Khách hàng:</strong>{" "}
-          {order.user?.fullName || order.guest_name || "Không rõ"}
-        </p>
-        <p>
-          <strong>Điện thoại:</strong>{" "}
-          {order.user?.phone || order.guest_phone || "Không rõ"}
-        </p>
-        <p>
-          <strong>Email:</strong>{" "}
-          {order.user?.email || order.guest_email || "Không rõ"}
-        </p>
-        <p>
-          <strong>Địa chỉ giao hàng:</strong> {fullAddress}
-        </p>
-        <p>
-          <strong>Giao hàng:</strong> {order.shippingMethod?.name || "Không rõ"}
-        </p>
-        <p>
-          <strong>Thanh toán:</strong>{" "}
+        <p><strong>Ngày đặt:</strong> {order.orderDate ? new Date(order.orderDate).toLocaleString() : ""}</p>
+        <p><strong>Trạng thái:</strong> {order.orderStatus?.name || "Không rõ"}</p>
+        <p><strong>Khách hàng:</strong> {order.user?.fullName || order.guest_name || "Không rõ"}</p>
+        <p><strong>Điện thoại:</strong> {order.user?.phone || order.guest_phone || "Không rõ"}</p>
+        <p><strong>Email:</strong> {order.user?.email || order.guest_email || "Không rõ"}</p>
+        <p><strong>Địa chỉ giao hàng:</strong> {fullAddress}</p>
+        <p><strong>Giao hàng:</strong> {order.shippingMethod?.name || "Không rõ"}</p>
+        <p><strong>Thanh toán:</strong> 
           {order.payment?.payment_method
-            ? `${order.payment.payment_method} (${
-                order.payment.is_paid ? "Đã thanh toán" : "Chưa thanh toán"
-              })`
+            ? `${order.payment.payment_method} (${order.payment.is_paid ? "Đã thanh toán" : "Chưa thanh toán"})`
             : "Chưa có thông tin"}
         </p>
       </div>
@@ -119,7 +98,7 @@ const OrderDetails: React.FC = () => {
       </table>
 
       <div className="order-total">
-        Tổng tiền: {parseFloat(order.order_total).toLocaleString()}₫
+        Tổng tiền: {parseFloat(order.order_total ?? 0).toLocaleString()}₫
       </div>
     </div>
   );

@@ -13,12 +13,28 @@ export class OrderItemController {
     }
   }
 
-  static async createOrderItem(req: Request, res: Response) {
+    static async getByOrderId(req: Request, res: Response) {
+        const orderId = parseInt(req.params.orderId, 10);
+        try {
+        const items = await orderItemService.getByOrderId(orderId);
+        res.json(items);
+        } catch (err) {
+        res.status(500).json({ message: "Error fetching items", error: err });
+        }
+    }
+    static async createOrderItem(req: Request, res: Response) {
+    // ép req.body thành đúng interface
     try {
-      await orderItemService.createOrderItem(req.body);
-      res.status(201).json({ message: "Order item created successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Error creating order item", error });
+      const { orderId, productItemId, quantity, price } = req.body;
+      const item = await orderItemService.createOrderItem({
+        order: { id: orderId },
+        productItem: { id: productItemId },
+        quantity,
+        price
+      });
+      res.status(201).json(item);
+    } catch (err) {
+      res.status(500).json({ message: "Error creating order item", error: err });
     }
   }
 

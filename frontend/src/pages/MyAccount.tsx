@@ -9,6 +9,9 @@ import Breadcrumb from "../components/Breadcrumb";
 import Sidebar2 from "../components/Sidebar2";
 
 const MyAccount = () => {
+    const storedUser = sessionStorage.getItem("userInfo");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    const userId = user?.id;
   return (
     <div className="my-account">
       <Breadcrumb title="My Account" />
@@ -18,7 +21,7 @@ const MyAccount = () => {
         <div className="account-details">
           <Routes>
             <Route index element={<Navigate to="orders" />} />
-            <Route path="orders" element={<OrderList />} />
+            <Route path="orders" element={<OrderList userId={userId}/>} />
             <Route path="address" element={<Address />} />
             <Route path="details" element={<AccountDetails />} />
           </Routes>

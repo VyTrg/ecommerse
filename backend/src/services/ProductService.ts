@@ -24,6 +24,32 @@ export class ProductService {
       ]
     });
   }
+async countProducts(categoryIds: number[]): Promise<number> {
+  const query = AppDataSource.getRepository(Product)
+    .createQueryBuilder('product');
+
+  if (categoryIds.length > 0) {
+    query.andWhere('product.category_id IN (:...categoryIds)', { categoryIds });
+  }
+
+  return await query.getCount();
+}
+
+async getProductsPaginated(categoryIds: number[], offset: number, limit: number): Promise<Product[]> {
+  const query = AppDataSource.getRepository(Product)
+    .createQueryBuilder('product')
+    .leftJoinAndSelect('product.productItems', 'productItems')
+    .leftJoinAndSelect('productItems.images', 'images')
+    .orderBy('product.id', 'DESC')
+    .skip(offset)
+    .take(limit);
+
+  if (categoryIds.length > 0) {
+    query.andWhere('product.category_id IN (:...categoryIds)', { categoryIds });
+  }
+
+  return await query.getMany();
+}
 
  
   async getProductById(id: number): Promise<Product | null> {

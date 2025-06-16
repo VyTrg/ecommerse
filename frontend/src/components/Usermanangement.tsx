@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, UserInput } from '../types/User';
 import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
 import '../styles/UserManagement.css';
 import Pagination from '../components/Pagination';
-
+import { FaArrowLeft } from 'react-icons/fa';
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -12,10 +12,17 @@ const UserManagement = () => {
   const [page, setPage] = useState(1);
   const limit = 10;
   useEffect(() => {
-    fetch('http://localhost:3001/api/users')
+    fetch('http://localhost:3001/api/users', {
+      headers: {
+        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+      }
+    })
       .then(res => res.json())
       .then(data => setUsers(data))
-      .catch(err => console.error('Failed to load users:', err));
+      .catch(err => {
+        console.error('Failed to load users:', err);
+
+      });
   }, []);
 
   const handleAdd = () => {
@@ -31,7 +38,12 @@ const UserManagement = () => {
   const handleDelete = (id: number) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       fetch(`http://localhost:3001/api/users/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
+        },
+        credentials: "include",
+        redirect: 'manual'
       })
         .then(res => {
           if (res.ok) {
@@ -49,8 +61,8 @@ const UserManagement = () => {
       // 👉 SỬA người dùng
       fetch(`http://localhost:3001/api/users/${user.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user)
+        headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
+        body: JSON.stringify(user),
       })
         .then(res => res.json())
         .then(updated => {
@@ -90,20 +102,27 @@ const UserManagement = () => {
   const currentUsers = users.slice(start, start + limit);
   return (
     <div className="user-management-container">
-      <h2 className="user-management-title">User Management</h2>
+      <h2 className="user-management-title">Users</h2>
 
-      {!showForm && (
-        <div className="user-management-action">
-          <button className="btn-add" onClick={handleAdd}>Add User</button>
-        </div>
-      )}
+      {/*{!showForm && (*/}
+      {/*  <div className="user-management-action">*/}
+      {/*    /!*<button className="btn-add" onClick={handleAdd}>Add User</button>*!/*/}
+      {/*  </div>*/}
+      {/*)}*/}
 
       {showForm ? (
-        <UserForm
-          initialData={editingUser || undefined}
-          onSubmit={handleFormSubmit}
-          onCancel={handleCancel}
-        />
+          <>
+            <button onClick={handleCancel} className="back-button">
+              <FaArrowLeft />
+              Back
+            </button>
+
+            <UserForm
+                initialData={editingUser || undefined}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCancel}
+            />
+          </>
       ) : (
         <>
           <UserTable users={currentUsers} onEdit={handleEdit} onDelete={handleDelete} />

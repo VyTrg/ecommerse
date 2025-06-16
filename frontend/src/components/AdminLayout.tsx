@@ -11,7 +11,7 @@ const AdminLayout = () => {
           <li><Link to="/admin">Dashboard</Link></li> 
           <li><Link to="/admin/users">User</Link></li>
           <li><Link to="/admin/products">Product</Link></li>
-          <li><Link to="/admin/categories">Category</Link></li>
+          {/*<li><Link to="/admin/categories">Category</Link></li>*/}
           <li><Link to="/admin/orders">Order</Link></li>
         </ul>
       </aside>

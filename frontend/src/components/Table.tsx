@@ -19,9 +19,6 @@ const Table = ({ data, columns, onEdit, onDelete }) => {
               <td key={col.key}>{item[col.key]}</td>
             ))}
             <td>
-              <button className="btn-edit" onClick={() => onEdit(item)}>
-                Edit
-              </button>
               <button className="btn-delete" onClick={() => onDelete(item.id)}>
                 Delete
               </button>
