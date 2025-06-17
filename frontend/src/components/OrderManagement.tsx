@@ -43,7 +43,11 @@ const OrderManagement: React.FC = () => {
 
   const loadOrders = () => {
     const query = `http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}`;
-    fetch(query)
+    fetch(query,{
+            headers:{
+              'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+            }
+          })
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data.data)) {

@@ -20,7 +20,12 @@ interface Props {
 const InvoiceButton: React.FC<Props> = ({ id }) => {
   const handleDownloadInvoice = async () => {
     try {
-      const res = await fetch(`http://localhost:3001/admin/api/orders/${id}`);
+      const res = await fetch(`http://localhost:3001/admin/api/orders/${id}`,
+          {
+            headers:{
+              'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+            }
+          });
       const data = await res.json();
 
       if (!data || !Array.isArray(data.orderItems)) {

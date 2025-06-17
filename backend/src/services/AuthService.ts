@@ -1,7 +1,7 @@
 import { AppDataSource } from "../config/datasource";
 import { User } from "../entity/User";
 import bcrypt from "bcrypt";
-import {createUserOnKeycloak, getAdminToken, mapUserToRole} from "../middleware/keycloakToken";
+import {createUserOnKeycloak, getAccessToken, getAdminToken, mapUserToRole} from "../middleware/keycloakToken";
 
 export const AuthService = {
 
@@ -32,6 +32,7 @@ export const AuthService = {
 
 
   async login(username: string, password: string) {
+
     const userRepo = AppDataSource.getRepository(User);
 
     const user = await userRepo.findOneBy({ username });
