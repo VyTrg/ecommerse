@@ -91,11 +91,13 @@ const SaleProductList: React.FC<SaleProductListProps> = ({
 
   const handleBuyNow = (product: Product) => {
     const price = product.productItems?.[0]?.price ?? 0;
+    const discountRate = product.productPromotions?.[0]?.promotion?.discount_rate ?? 0;
+    const newPrice = discountRate > 0 ? Math.round(price * (1 - discountRate)) : price;
     const img = product.productItems?.[0]?.images?.[0]?.image_url || '';
     addToCart({
       id: product.id,
       name: product.name,
-      price: price,
+      price: newPrice,
       image: img,
     });
     setIsCartOpen(true);
@@ -115,26 +117,18 @@ const SaleProductList: React.FC<SaleProductListProps> = ({
             const isHovered = hoveredProduct === product.id;
 
             return (
-              <div 
-                key={product.id} 
-                className="product"
-                onClick={() => handleProductClick(product)}
-                onMouseEnter={() => setHoveredProduct(product.id)}
-                onMouseLeave={() => setHoveredProduct(null)}
-              >
-                {img && <img src={img} alt={product.name} />}
-                <p className="product-name">{product.name}</p>
-                <p className="product-price">
-                  <span style={{ textDecoration: 'line-through', color: '#999' }}>{price.toLocaleString()}₫</span>
-                  <br />
-                  <span style={{ color: '#e44d26', fontWeight: 'bold' }}>{newPrice.toLocaleString()}₫</span>
-                  {discountRate > 0 && <span className="sale-badge">SALE</span>}
-                </p>
-                {isHovered && (
-                  <div className="buy-now-overlay">
-                    Buy Now
-                  </div>
-                )}
+              <div className="product-item" key={product.id}>
+                <ProductCard
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    img: img,
+                    price: price,
+                    discountPrice: newPrice,
+                    isOnSale: discountRate > 0,
+                  }}
+                  onBuy={() => handleBuyNow(product)}
+                />
               </div>
             );
           })

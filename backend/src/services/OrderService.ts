@@ -21,7 +21,6 @@ export class OrderService {
     this.statusRepository = AppDataSource.getRepository(Order_status);
   }
 
-
  
 async getAllOrders(page: number, limit: number) {
   const offset = (page - 1) * limit;
@@ -35,7 +34,6 @@ async getAllOrders(page: number, limit: number) {
 
   return { data: orders, totalCount };
 }
-
 
   // Lấy đơn hàng theo ID
   async getOrderById(id: number): Promise<Order | null> {

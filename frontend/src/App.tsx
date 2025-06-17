@@ -22,6 +22,8 @@ import { CartProvider } from "./contexts/CartContext";
 import CartPopupWrapper from "./components/CartPopupWrapper"; 
 import "./assets/themify-icons/themify-icons.css";
 import CheckoutPage from "./pages/CheckoutPage";
+import CategoryPage from "./pages/CategoryPage";
+// import CategoryPage from "./pages/CategoryPage";
 
 import AdminLayout from "./components/AdminLayout";
 import ProductDetailPage from "./pages/ProductDetailPage";

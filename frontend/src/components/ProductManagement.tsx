@@ -208,16 +208,15 @@ const ProductManagement = () => {
           });
         }
 
-        if (formData.discount > 0) {
-          await fetch('http://localhost:3001/api/product-promotions/set-discount', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              product_id: editingProduct.id,
-              discount_rate: formData.discount / 100
-            })
-          });
-        }
+        // Luôn gọi API set discount, kể cả khi discount = 0
+        await fetch('http://localhost:3001/api/product-promotions/set-discount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            product_id: editingProduct.id,
+            discount_rate: formData.discount / 100
+          })
+        });
       } else {
         // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
@@ -274,24 +273,15 @@ const ProductManagement = () => {
     }
   };
 
-const filteredProducts = products.filter(p =>
-  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  p.description.toLowerCase().includes(searchTerm.toLowerCase())
-);
-
-const totalPagesfill = Math.ceil(filteredProducts.length / limit);
-
   const start = (page - 1) * limit;
- const currentProducts = filteredProducts.slice(start, start + limit);
+  const currentProducts = products.slice(start, start + limit);
 
-  
   return (
     
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
-          <h3>{editingProduct ? 'Edit products' : 'Add new products'}</h3>
-
+          <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
 
           <label>Product name:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
@@ -373,7 +363,6 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
               style={{ resize: "none", overflow: "auto", height: "150px", width: "100%" }}
             />
           </label>
-
           <label>
             Category:
             <select
@@ -505,7 +494,6 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
               })}
             </tbody>
           </table>
-
           {totalPages > 1 && (
             <div style={{ textAlign: 'center', marginTop: 20 }}>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (

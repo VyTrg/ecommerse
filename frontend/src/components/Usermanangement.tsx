@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { User, UserInput } from '../types/User';
 import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
-import '../styles/UserManagement.css';
+import '../styles/Usermanagement.css';
 import Pagination from '../components/Pagination';
 import { FaArrowLeft } from 'react-icons/fa';
 
@@ -33,6 +33,20 @@ const UserManagement = () => {
   useEffect(() => {
     loadUsers();
   }, [page]);
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/users', {
+      headers: {
+        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => setUsers(data))
+      .catch(err => {
+        console.error('Failed to load users:', err);
+
+      });
+  }, []);
 
   const handleAdd = () => {
     setEditingUser(null);

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Onsale.css';
+import ProductCard from './ProductCard';
+import ShoppingCartPopup from './ShoppingCartPopup';
+import { useCart } from '../contexts/CartContext';
 
 interface ProductPromotion {
   promotion: {
@@ -34,17 +37,16 @@ const OnSale: React.FC = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<'clothing' | 'swimwear' | 'accessories'>('clothing');
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { addToCart, cart, updateQuantity, removeItem } = useCart();
 
   useEffect(() => {
     (async () => {
       try {
-        // Ưu tiên lấy từ /api/products/sale nếu có, fallback sang /api/products
         let res = await fetch('http://localhost:3001/api/products/sale');
         if (!res.ok) res = await fetch('http://localhost:3001/api/products');
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
-        // Nếu là dạng {data: [...], totalCount: ...} thì lấy data.data
         setAllProducts(Array.isArray(data) ? data : data.data);
       } catch (err) {
         console.error('Error loading products:', err);
@@ -52,7 +54,6 @@ const OnSale: React.FC = () => {
     })();
   }, []);
 
-  // Lọc sản phẩm có discount và đúng category
   const now = new Date();
   const saleProducts = allProducts.filter(
     p => p.productPromotions?.some(
@@ -64,6 +65,20 @@ const OnSale: React.FC = () => {
 
   const handleProductClick = (productId: number) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleBuyNow = (product: Product) => {
+    const price = product.productItems?.[0]?.price ?? 0;
+    const discountRate = product.productPromotions?.[0]?.promotion?.discount_rate ?? 0;
+    const newPrice = discountRate > 0 ? Math.round(price * (1 - discountRate)) : price;
+    const img = product.productItems?.[0]?.images?.[0]?.image_url || '';
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: newPrice,
+      image: img,
+    });
+    setIsCartOpen(true);
   };
 
   return (
@@ -83,34 +98,32 @@ const OnSale: React.FC = () => {
             const discountRate = product.productPromotions?.[0]?.promotion?.discount_rate ?? 0;
             const newPrice = discountRate > 0 ? Math.round(price * (1 - discountRate)) : price;
             const img = product.productItems?.[0]?.images?.[0]?.image_url || '';
-            const isHovered = hoveredProduct === product.id;
 
             return (
-              <div 
-                key={product.id} 
-                className="product"
-                onClick={() => handleProductClick(product.id)}
-                onMouseEnter={() => setHoveredProduct(product.id)}
-                onMouseLeave={() => setHoveredProduct(null)}
-              >
-                {img && <img src={img} alt={product.name} />}
-                <p className="product-name">{product.name}</p>
-                <p className="product-price">
-                  <span style={{ textDecoration: 'line-through', color: '#999' }}>{price.toLocaleString()}₫</span>
-                  <br />
-                  <span style={{ color: '#e44d26', fontWeight: 'bold' }}>{newPrice.toLocaleString()}₫</span>
-                  {discountRate > 0 && <span className="sale-badge">SALE</span>}
-                </p>
-                {isHovered && (
-                  <div className="buy-now-overlay">
-                    Buy Now
-                  </div>
-                )}
+              <div className="product-item" key={product.id}>
+                <ProductCard
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    img: img,
+                    price: price,
+                    discountPrice: newPrice,
+                    isOnSale: discountRate > 0,
+                  }}
+                  onBuy={() => handleBuyNow(product)}
+                />
               </div>
             );
           })
         )}
       </div>
+      <ShoppingCartPopup
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cart}
+        updateQuantity={updateQuantity}
+        removeItem={removeItem}
+      />
     </div>
   );
 };

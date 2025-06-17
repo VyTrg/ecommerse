@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/OrderManagement.css';
 import { useNavigate } from 'react-router-dom';
+// Import ConfirmDialog và Notification
 import ConfirmDialog from '../components/ConfirmDialog';
 import Notification from '../components/Notification';
 import InvoiceButton from "./InvoiceButton";
@@ -32,14 +33,20 @@ const OrderManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
+  
+
+  const navigate = useNavigate();
+  const limit = 10;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  // State cho Notification (toast)
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'error';
   } | null>(null);
 
-  const navigate = useNavigate();
-  const limit = 10;
-  const totalPages = Math.ceil(totalCount / limit);
+  // State cho ConfirmDialog (modal xác nhận)
+
 
   const loadOrders = () => {
     const query = `http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}`;
@@ -54,12 +61,12 @@ const OrderManagement: React.FC = () => {
           setOrders(data.data);
           setTotalCount(data.totalCount || 0);
         } else {
-          console.warn("⚠️ Dữ liệu trả về không đúng định dạng:", data);
+          console.warn(" Dữ liệu trả về không đúng định dạng:", data);
           setOrders([]);
         }
       })
       .catch((err) => {
-        console.error('❌ Lỗi khi tải đơn hàng:', err);
+        console.error(' Lỗi khi tải đơn hàng:', err);
         setOrders([]);
       });
   };
@@ -68,9 +75,16 @@ const OrderManagement: React.FC = () => {
     loadOrders();
   }, [page]);
 
-  const handleDeleteClick = (id: number) => {
-    setOrderToDelete(id);
-    setShowConfirm(true);
+  const handleDelete = (id: number) => {
+    if (window.confirm('Xác nhận xoá đơn hàng này?')) {
+      fetch(`http://localhost:3001/admin/api/orders/${id}`, { method: 'DELETE' })
+        .then((res) => {
+          if (res.ok) loadOrders();
+        })
+        .catch((err) => console.error(' Lỗi khi xoá đơn hàng:', err));
+            setOrderToDelete(id);
+            setShowConfirm(true);
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -199,37 +213,54 @@ const OrderManagement: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {orders.length > 0 ? orders.map((order, index) => (
-            <tr key={order.id}>
-              <td>{(page - 1) * limit + index + 1}</td>
-              <td>
-                {order.user?.fullName || order.guest_name || 'Khách vãng lai'}
-                {order.guest_email && (
-                  <>
-                    <br /><small>{order.guest_email}</small>
-                  </>
-                )}
-              </td>
-              <td>{(order.order_total ?? 0).toLocaleString()}₫</td>
-              <td>
-                <select
-                  value={order.orderStatus?.status ?? ''}
-                  onChange={e => updateOrderStatus(order.id, e.target.value)}
-                >
-                  <option value="Preparing">Preparing</option>
-                  <option value="Shipping">Shipping</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-              </td>
-              <td>{order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : ''}</td>
-              <td>
-                <button className="order-button btn-detail" onClick={() => goToDetail(order.id)}>Detail</button>
-                <button className="order-button btn-delete" onClick={() => handleDeleteClick(order.id)}>Delete</button>
-                <InvoiceButton id={order.id} />
-              </td>
-            </tr>
-          )) : (
+          {orders.length > 0 ? (
+            orders.map((order, index) => (
+              <tr key={order.id}>
+                <td>{(page - 1) * limit + index + 1}</td>
+                <td>
+                  {order.user?.fullName || order.guest_name || 'Khách vãng lai'}
+                  {order.guest_email && (
+                    <>
+                      <br /><small>{order.guest_email}</small>
+                    </>
+                  )}
+                </td>
+                <td>{(order.order_total ?? 0).toLocaleString()}₫</td>
+
+                <td>{order.orderStatus?.status || 'Đang xử lý'}</td>
+
+                <td>{order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : ''}</td>
+
+                <td>
+                  <select
+                      value={order.orderStatus?.status ?? ''}
+                      onChange={e => updateOrderStatus(order.id, e.target.value)}
+                  >
+                    <option value="Preparing">Cancelled</option>
+                    <option value="Shipping">Shipping</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </td>
+                <td>{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
+                <td>
+                  <button
+                      className="order-button btn-detail"
+                      onClick={() => goToDetail(order.id)}
+                  >
+                    Detail
+                  </button>
+                  <button
+                      className="order-button btn-delete"
+                      onClick={() => handleDelete(order.id)}
+                  >
+                    Delete
+                  </button>
+                  <InvoiceButton id={order.id} />
+                </td>
+              </tr>
+            ))
+          ) : (
             <tr><td colSpan={6}>Không có đơn hàng nào.</td></tr>
           )}
         </tbody>

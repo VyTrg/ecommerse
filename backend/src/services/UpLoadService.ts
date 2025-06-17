@@ -1,4 +1,5 @@
 import cloudinary from "../config/cloudinary";
+import { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
 
 /**
  * Upload file buffer (dùng cho file upload từ FE)
@@ -10,7 +11,7 @@ export const uploadFileBufferToCloudinary = async (
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder },
-      (error, result) => {
+      (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
         if (error || !result) {
           console.error("Cloudinary Upload Error:", error);
           return reject(error);

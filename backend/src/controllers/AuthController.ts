@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
 import bcrypt from "bcrypt";
 import {getAccessToken} from "../middleware/keycloakToken";
-import {createCookie} from "react-router";
 
 interface RegisterRequestBody {
   username: string;

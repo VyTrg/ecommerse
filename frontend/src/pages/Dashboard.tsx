@@ -47,7 +47,13 @@ const AdminDashboard: React.FC = () => {
           userRes.json(),
         ]);
 
-        setStats(prev => ({
+        setStats({
+          categories: Array.isArray(catData) ? catData.length : 0,
+          products: 0,
+          orders: 0,
+          users: Array.isArray(userData) ? userData.length : 0,
+        });
+       setStats(prev => ({
           ...prev,
           categories: Array.isArray(catData) ? catData.length : 0,
           products: typeof prodData.totalCount === "number" ? prodData.totalCount : 0,
@@ -67,17 +73,23 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchOrderStats = async () => {
       try {
-        const orderRes = await fetch(
-          `http://localhost:3001/api/statistics/orders?type=${type}&date=${date}`,
-          {
-            headers: {
-              Authorization: "Bearer " + (sessionStorage.getItem("token") || ""),
-            },
-          }
-        );
+        const [prodRes, orderRes] = await Promise.all([
+          fetch(`http://localhost:3001/api/statistics/products?type=${type}&date=${date}`,{
+
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+          }),
+          fetch(`http://localhost:3001/api/statistics/orders?type=${type}&date=${date}`,
+              {
+                headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+          }),
+        ]);
+ 
+        const prodData = await prodRes.json();
         const orderData = await orderRes.json();
         setStats(prev => ({
           ...prev,
+          products: prodData.totalInStock || 0,
+
           orders: orderData.totalOrders || 0,
         }));
       } catch (err) {
@@ -91,8 +103,9 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <h1>Welcome to the Admin Dashboard</h1>
 
+      <h1>Welcome to the Admin Dashboard</h1>
+      
       <div className="dashboard-filter">
         <select className="dashboard-select" value={type} onChange={e => setType(e.target.value)}>
           <option value="day">Day</option>
@@ -107,28 +120,24 @@ const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className="stats-boxes">
-          <div className="stat-box">
-            <h2>Categories</h2>
-            <p>{stats.categories}</p>
-          </div>
-          <div className="stat-box">
-            <h2>Products</h2>
-            <p>{stats.products}</p>
-          </div>
-          <div className="stat-box">
-            <h2>Orders</h2>
-            <p>{stats.orders}</p>
-          </div>
-          <div className="stat-box">
-            <h2>Users</h2>
-            <p>{stats.users}</p>
-          </div>
+      <div className="stats-boxes">
+        <div className="stat-box">
+          <h2>Categories</h2>
+          <p>{stats.categories}</p>
         </div>
-      )}
+        <div className="stat-box">
+          <h2>Products</h2>
+          <p>{stats.products}</p>
+        </div>
+        <div className="stat-box">
+          <h2>Orders</h2>
+          <p>{stats.orders}</p>
+        </div>
+        <div className="stat-box">
+          <h2>Users</h2>
+          <p>{stats.users}</p>
+        </div>
+      </div>
     </div>
   );
 };

@@ -4,15 +4,21 @@ import React from "react";
 import "../styles/CategoryPage.css";
 import { useCart } from "../contexts/CartContext"; 
 
+type ProductItem = {
+  id: number;
+  price: number;
+  images?: { image_url?: string }[];
+  product: {
+    name: string;
+    category_id: number;
+    productPromotions?: any[];
+  };
+};
+
 type Product = {
   id: number;
   name: string;
-  productItems: {
-    price: number;
-    image: {
-      image_url: string;
-    };
-  }[];
+  productItems: ProductItem[];
 };
 
 export default function CategoryPage() {
@@ -36,6 +42,32 @@ export default function CategoryPage() {
     }
   }, [categoryName]);
 
+  const handleAddToCart = (item: ProductItem) => {
+    // Tính discount nếu có
+    let discountRate = 0;
+    let newPrice = item.price;
+    if (item.product && item.product.productPromotions) {
+      const now = new Date();
+      const validPromotion = item.product.productPromotions.find(
+        (pp: any) =>
+          pp.promotion &&
+          pp.promotion.discount_rate > 0 &&
+          new Date(pp.promotion.start_at) <= now &&
+          new Date(pp.promotion.end_at) >= now
+      );
+      if (validPromotion) {
+        discountRate = validPromotion.promotion.discount_rate;
+        newPrice = Math.round(item.price * (1 - discountRate));
+      }
+    }
+    addToCart({
+      id: item.id,
+      name: item.product.name,
+      price: newPrice, // Sử dụng giá đã discount
+      image: item.images?.[0]?.image_url || "/fallback.jpg",
+    });
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <h1 style={{ fontSize: "28px", fontWeight: "bold", textTransform: "uppercase" }}>
@@ -54,24 +86,18 @@ export default function CategoryPage() {
           style={{ display: "flex", flexWrap: "wrap", gap: 20 }}
         >
           {products.map((product) => {
-            const item = product.productItems?.[0]; 
+            const item = product.productItems?.[0];
+            if (!item) return null;
             return (
               <div className="category-product-card" key={product.id}>
-                <img src={item?.image?.image_url} alt={product.name} />
+                <img src={item.images?.[0]?.image_url} alt={product.name} />
                 <h3>{product.name}</h3>
-                <p>{item?.price}₫</p>
+                <p>{item.price}₫</p>
                 <div className="category-buy-btn">
                   <button
                     onClick={() => {
-                      if (item) {
-                        addToCart({
-                          id: product.id,
-                          name: product.name,
-                          price: item.price,
-                          image: item.image.image_url,
-                        });
-                        alert("Item added to cart!");
-                      }
+                      handleAddToCart(item);
+                      alert("Item added to cart!");
                     }}
                   >
                     BUY NOW
