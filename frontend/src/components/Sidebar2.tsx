@@ -13,9 +13,9 @@ const Sidebar2 = () => {
         <li>
           <Link to="/myaccount/orders">Orders</Link>
         </li>
-        <li>
-          <Link to="/myaccount/address">Addresses</Link>
-        </li>
+        {/*<li>*/}
+        {/*  <Link to="/myaccount/address">Addresses</Link>*/}
+        {/*</li>*/}
         <li>
           <Link to="/myaccount/details">Account details</Link>
         </li>

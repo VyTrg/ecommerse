@@ -10,6 +10,6 @@ router.post("/create", UserController.createUser);
 router.put("/:id/update", UserController.updateUser);
 router.delete("/:id/delete", UserController.deleteUser);
 router.post("/:id/address", UserController.addUserAddress);
-
+router.put  ("/changeInfo", UserController.changeInfo);
 export default router;
 

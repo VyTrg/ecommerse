@@ -15,12 +15,23 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [catRes, userRes] = await Promise.all([
-          fetch("http://localhost:3001/api/categories"),
-          fetch("http://localhost:3001/api/users"),
+        const [prodRes, catRes, userRes] = await Promise.all([
+          fetch("http://localhost:3001/api/products",{
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+
+          }),
+          fetch("http://localhost:3001/api/categories",{
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+
+          }),
+          fetch("http://localhost:3001/api/users",{
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+
+          }),
         ]);
 
-        const [catData, userData] = await Promise.all([
+        const [prodData, catData, userData] = await Promise.all([
+          prodRes.json(),
           catRes.json(),
           userRes.json(),
         ]);
@@ -31,6 +42,12 @@ const AdminDashboard: React.FC = () => {
           orders: 0,
           users: Array.isArray(userData) ? userData.length : 0,
         });
+       setStats(prev => ({
+          ...prev,
+          products: prodData.length,
+          categories: catData.length,
+          users: userData.length,
+        }));
       } catch (err) {
         console.error("Failed to load statistics:", err);
       }
@@ -43,23 +60,28 @@ const AdminDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const [prodRes, orderRes] = await Promise.all([
-          fetch(`http://localhost:3001/api/statistics/products?type=${type}&date=${date}`),
-          fetch(`http://localhost:3001/api/statistics/orders?type=${type}&date=${date}`),
-        ]);
+          fetch(`http://localhost:3001/api/statistics/products?type=${type}&date=${date}`,{
 
+            headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+          }),
+          fetch(`http://localhost:3001/api/statistics/orders?type=${type}&date=${date}`,
+              {
+                headers:{"Authorization": 'Bearer ' + sessionStorage.getItem('token') || ''}
+          }),
+        ]);
+ 
         const prodData = await prodRes.json();
         const orderData = await orderRes.json();
 
         setStats(prev => ({
           ...prev,
           products: prodData.totalInStock || 0,
+
           orders: orderData.totalOrders || 0,
         }));
-
       } catch (err) {
         setStats(prev => ({
           ...prev,
-          products: 0,
           orders: 0,
         }));
         console.error("Failed to load statistics:", err);
@@ -71,7 +93,8 @@ const AdminDashboard: React.FC = () => {
   
   return (
     <div className="dashboard-container">
-      <h1>Chào mừng đến trang quản trị</h1>
+
+      <h1>Welcome to the Admin Dashboard</h1>
       
       <div className="dashboard-filter">
         <select
@@ -82,7 +105,6 @@ const AdminDashboard: React.FC = () => {
           <option value="day">Day</option>
           <option value="week">Week</option>
           <option value="month">Month</option>
-          <option value="year">Year</option>
         </select>
         <input
           className="dashboard-input"
@@ -94,19 +116,19 @@ const AdminDashboard: React.FC = () => {
 
       <div className="stats-boxes">
         <div className="stat-box">
-          <h2>Danh mục</h2>
+          <h2>Categories</h2>
           <p>{stats.categories}</p>
         </div>
         <div className="stat-box">
-          <h2>Sản phẩm</h2>
+          <h2>Products</h2>
           <p>{stats.products}</p>
         </div>
         <div className="stat-box">
-          <h2>Đơn hàng</h2>
+          <h2>Orders</h2>
           <p>{stats.orders}</p>
         </div>
         <div className="stat-box">
-          <h2>Người dùng</h2>
+          <h2>Users</h2>
           <p>{stats.users}</p>
         </div>
       </div>

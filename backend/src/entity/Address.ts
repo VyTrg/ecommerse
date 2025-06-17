@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { User_address } from "./UserAddress";
-
+import { Order } from "./Order";
 @Entity()
 export class Address {
   @PrimaryGeneratedColumn()
@@ -23,4 +23,7 @@ export class Address {
 
   @OneToMany(() => User_address, (user_address) => user_address.address)
   user_addresses!: User_address[];
+
+  @OneToMany(() => Order, order => order.shippingAddress)
+  orders?: Order[]; 
 }

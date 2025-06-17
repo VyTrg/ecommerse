@@ -3,7 +3,7 @@ import { useCart } from "../contexts/CartContext";
 import "../styles/CheckoutPage.css";
 import InvoiceButton from "../components/InvoiceButton";
 
-const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+const currentUser = JSON.parse(sessionStorage.getItem("currentUser") || "null");
 
 
 const CheckoutPage: React.FC = () => {

@@ -81,6 +81,7 @@ export class ProductController {
       const categoryRepo = AppDataSource.getRepository(Category);
       let matchedCategoryIds: number[] = [];
 
+
       if (categoryName) {
         const allCategories = await categoryRepo.find({ relations: ["parent"] });
         const parentCategory = allCategories.find(

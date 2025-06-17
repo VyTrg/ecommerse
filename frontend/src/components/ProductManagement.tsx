@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ProductManagement.css';
-import Pagination from '../components/Pagination';
 
 type ProductItem = {
   id: number;
@@ -30,7 +29,7 @@ type Product = {
 type Category = {
   id: number;
   name: string;
-  parent_id: number | null;
+  parent: number | null;
 };
 
 type FormDataType = {
@@ -44,7 +43,6 @@ type FormDataType = {
 };
 
 const ProductManagement = () => {
-
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -100,7 +98,7 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' , headers:{'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''}})
         .then(res => {
           if (res.ok) loadProducts();
         })
@@ -123,7 +121,7 @@ const ProductManagement = () => {
     });
     setShowForm(true);
   };
-
+  console.log(categories)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -184,7 +182,7 @@ const ProductManagement = () => {
         // Update existing product
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -197,7 +195,7 @@ const ProductManagement = () => {
         if (productItemId) {
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
             body: JSON.stringify({
               price: formData.price,
               quantity: formData.quantity,
@@ -220,7 +218,7 @@ const ProductManagement = () => {
         // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -232,7 +230,7 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' ,'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
           body: JSON.stringify({
             price: formData.price,
             quantity: formData.quantity,
@@ -274,12 +272,12 @@ const ProductManagement = () => {
 
   const start = (page - 1) * limit;
   const currentProducts = products.slice(start, start + limit);
+
   return (
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
           <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
-
 
           <label>Tên sản phẩm:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
@@ -361,7 +359,6 @@ const ProductManagement = () => {
               style={{ resize: "none", overflow: "auto", height: "50px", width: "100%" }}
             />
           </label>
-
           <label>
             Category:
             <select
@@ -375,6 +372,7 @@ const ProductManagement = () => {
             >
               <option value="">-- Select Category --</option>
               {categories.map(cat => (
+
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
@@ -387,6 +385,7 @@ const ProductManagement = () => {
             <button className="btn-delete" onClick={() => setShowForm(false)}>
               Cancel
             </button>
+
           </div>
         </div>
       ) : (
@@ -473,9 +472,9 @@ const ProductManagement = () => {
                   </tr>
                 );
               })}
+
             </tbody>
           </table>
-
           {totalPages > 1 && (
             <div style={{ textAlign: 'center', marginTop: 20 }}>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (

@@ -17,6 +17,7 @@ const UserTable: React.FC<Props> = ({ users, onEdit, onDelete }) => {
           <th>ID</th>
           <th>Username</th>
           <th>Email</th>
+            <th>Phone</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -26,8 +27,9 @@ const UserTable: React.FC<Props> = ({ users, onEdit, onDelete }) => {
             <td>{user.id}</td>
             <td>{user.username}</td>
             <td>{user.email}</td>
+              <td>{user.phone}</td>
             <td>
-              <button onClick={() => onEdit(user)} className="btn-edit">Edit</button>
+              {/*<button onClick={() => onEdit(user)} className="btn-edit">Edit</button>*/}
               <button onClick={() => onDelete(user.id)} className="btn-delete">Delete</button>
             </td>
           </tr>
