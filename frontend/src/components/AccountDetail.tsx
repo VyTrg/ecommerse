@@ -106,7 +106,7 @@ const AccountDetails: React.FC = () => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-            />
+            disabled/>
             <small>
               This will be how your name will be displayed in the account section and in reviews
             </small>

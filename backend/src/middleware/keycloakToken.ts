@@ -156,7 +156,26 @@ export async function getKeycloakId(adminToken: string, username: string, passwo
     return locationHeader?.split('/').pop();//return keycloak id
 }
 
-
-
-
+export async function reseterPassword(accessToken: string, keycloakId: string, newPassword: string) {
+    const userInfoResponse = await fetch(
+        `http://localhost:8080/admin/realms/${REALM}/users/${keycloakId}/reset-password`,
+        {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    "grant_type": "password",
+                    "value": newPassword,
+                    "temporary": false,
+                    // "client_secret": KEYCLOAK_CLIENT_SECRET,
+                }
+            ),
+        }
+    );
+    const locationHeader = userInfoResponse.headers.get('Location');
+    return locationHeader?.split('/').pop();//return keycloak id
+}
 
