@@ -1,6 +1,8 @@
-
 import { Request, Response } from "express";
 import { ProductPromotionService } from "../services/ProductPromotionService";
+import { AppDataSource } from "../config/datasource";
+import { Promotion } from "../entity/Promotion";
+import { Product } from "../entity/Product";
 
 const productPromotionService = new ProductPromotionService();
 
@@ -78,5 +80,37 @@ export class ProductPromotionController {
         } catch (error) {
             res.status(500).json({ message: "Error deleting product promotion", error });
         }
+    }
+}
+
+// Định nghĩa hàm setDiscount ngoài class
+export async function setDiscount(req: Request, res: Response) {
+        try {
+            const { product_id, discount_rate } = req.body;
+
+            if (!product_id || discount_rate === undefined) {
+                return res.status(400).json({ message: "Product ID and discount rate are required" });
+            }
+
+        if (discount_rate < 0 || discount_rate > 1) {
+            return res.status(400).json({ message: "Discount rate must be between 0 and 1" });
+            }
+
+            // Kiểm tra xem sản phẩm có tồn tại không
+            const productRepo = AppDataSource.getRepository(Product);
+            const product = await productRepo.findOne({ where: { id: product_id } });
+            if (!product) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+
+        // Truyền discount_rate thẳng vào service
+        await productPromotionService.setDiscount(product_id, discount_rate);
+
+            res.status(200).json({
+            message: discount_rate === 0 ? "Discount removed successfully" : "Discount set successfully"
+            });
+        } catch (error) {
+            console.error("Error setting discount:", error);
+            res.status(500).json({ message: "Error setting discount", error });
     }
 }

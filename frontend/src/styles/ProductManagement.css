@@ -4,6 +4,7 @@
     padding: 0;
     background-color: #ffffff;
     box-shadow: none;
+    margin-top: 20px;
   }
   
   .product-table-title {
@@ -238,3 +239,4 @@
   .product-table-container .product-table td{
     color:black
   }
+  

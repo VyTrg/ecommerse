@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import "../styles/SearchResult.css";
 
 interface ProductItem {
@@ -68,7 +68,7 @@ const SearchResult = () => {
                 const price = firstItem?.price;
 
                 return (
-                  <div className="product-card" key={product.id}>
+                  <Link to={`/product/${product.id}`} className="product-card" key={product.id}>
                     <img
                       src={imageUrl}
                       alt={product.name}
@@ -83,7 +83,7 @@ const SearchResult = () => {
                         ? `${price.toLocaleString()}₫`
                         : "No price available"}
                     </p>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

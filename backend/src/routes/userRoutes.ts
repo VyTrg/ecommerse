@@ -3,7 +3,9 @@ import {UserController} from "../controllers/UserController";
 // import {authMiddleware} from "../middleware/authMiddleware";
 
 const router = Router();
-// router.post("/current", UserController.getCurrentUser);
+
+router.get("/count", UserController.getUserCount);
+
 router.get("/", UserController.getAllUsers);
 router.get("/:id", UserController.getUserById);
 router.post("/create", UserController.createUser);

@@ -83,10 +83,12 @@ const handlePlaceOrder = async () => {
 
     alert("Đặt hàng thành công!");
 const createdOrder = await res.json();
+console.log("ORDER CREATED:", createdOrder);
+
     
     const orderForPdf = {
       customerName: isGuest ? formData.guest_name : currentUser.name,
-      orderId: "ORD-" + createdOrder.id,
+      orderId: "ORD-" + createdOrder.order.id,
       total: total,
       items: cart.map((item) => ({
         name: item.name,

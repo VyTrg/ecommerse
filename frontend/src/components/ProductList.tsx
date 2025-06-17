@@ -9,7 +9,6 @@ export type ProductItem = {
   price: number;
   images: {
     image_url?: string;
- 
   }[];
   product: {
     name: string;
@@ -35,39 +34,31 @@ const ProductList: React.FC<ProductListProps> = ({
   const { cart, addToCart, updateQuantity, removeItem } = useCart();
 
   useEffect(() => {
-    console.log("📦 categoryIds prop received:", categoryIds);
-
     if (!categoryIds || categoryIds.length === 0) {
       console.warn("⚠️ categoryIds is empty — skipping fetch.");
       setProductItems([]);
+      onTotalCountChange?.(0);
       return;
     }
 
-    fetch("http://localhost:3001/api/product-items")
+    const query = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      categoryIds: categoryIds.join(","),
+    });
+
+   fetch(`http://localhost:3001/api/product-items/paginated?${query.toString()}`)
+
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch product items.");
         return res.json();
       })
-      .then((data: ProductItem[]) => {
-        console.log("Fetched all products:", data);
-
-        const filtered = data.filter(
-          (item) =>
-            item &&
-            item.product &&
-            typeof item.product.category_id === "number" &&
-            categoryIds.includes(item.product.category_id)
-        );
-
-        console.log("Filtered products to display:", filtered);
-        setProductItems(filtered);
-        onTotalCountChange?.(filtered.length);
+      .then((data) => {
+        setProductItems(data.data || []);
+        onTotalCountChange?.(data.totalCount || 0);
       })
       .catch((err) => console.error("Error loading product items:", err));
-  }, [categoryIds, onTotalCountChange]);
-
-  const start = (page - 1) * limit;
-  const currentItems = productItems.slice(start, start + limit);
+  }, [categoryIds, page, limit, onTotalCountChange]);
 
   const handleBuyNow = (item: ProductItem) => {
     const image = item.images?.[0];
@@ -85,12 +76,12 @@ const ProductList: React.FC<ProductListProps> = ({
   return (
     <div className="product-list-container">
       <div className="product-container">
-        {currentItems.length === 0 ? (
+        {productItems.length === 0 ? (
           <p className="no-product">No matching products found.</p>
         ) : (
-          currentItems.map((item) => {
+          productItems.map((item) => {
             const image = item.images?.[0];
-            const imageUrl =  image?.image_url || "/fallback.jpg";
+            const imageUrl = image?.image_url || "/fallback.jpg";
 
             return (
               <ProductCard

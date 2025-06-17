@@ -10,8 +10,7 @@ const Home: React.FC = () => {
     <div>
       <Slide/>
       <OnSale/>
-      <UbeenStitched/>
-      <ProductItem/> 
+      <UbeenStitched/> 
     </div>
   );
 };

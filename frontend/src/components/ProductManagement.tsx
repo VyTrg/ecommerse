@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ProductManagement.css';
+import Pagination from '../components/Pagination';
 
 type ProductItem = {
   id: number;
   price: number;
+  new_price: number | null;
   quantity: number;
   images: { image_url: string }[];
+};
+
+type ProductPromotion = {
+  promotion: {
+    discount_rate: number;
+    start_at: string;
+    end_at: string;
+  };
 };
 
 type Product = {
@@ -14,12 +24,13 @@ type Product = {
   description: string;
   category_id: number;
   productItems: ProductItem[];
+  productPromotions?: ProductPromotion[];
 };
 
 type Category = {
   id: number;
   name: string;
-  parent: number | null;
+  parent_id: number | null;
 };
 
 type FormDataType = {
@@ -29,9 +40,13 @@ type FormDataType = {
   images: string[];
   category_id: number;
   description: string;
+  discount: number;
 };
 
 const ProductManagement = () => {
+
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -43,24 +58,34 @@ const ProductManagement = () => {
     images: [],
     category_id: 0,
     description: '',
+    discount: 0,
   });
 
   const [page, setPage] = useState(1);
   const limit = 10;
   const [totalCount, setTotalCount] = useState(0);
   const totalPages = Math.ceil(totalCount / limit);
+  const [fetchAll, setFetchAll] = useState(true);
 
   const loadProducts = () => {
-    fetch(`http://localhost:3001/api/products?page=${page}&limit=${limit}`)
+    const url = fetchAll
+      ? 'http://localhost:3001/api/products'
+      : `http://localhost:3001/api/products?page=${page}&limit=${limit}`;
+    fetch(url)
       .then(res => res.json())
       .then(data => {
-        setProducts(data.data);
-        setTotalCount(data.totalCount);
+        if (fetchAll) {
+          setProducts(data.data);
+          setTotalCount(data.data.length);
+        } else {
+          setProducts(data.data);
+          setTotalCount(data.totalCount);
+        }
       })
       .catch(err => console.error('Lỗi khi tải sản phẩm:', err));
   };
 
-  useEffect(() => { loadProducts(); }, [page]);
+  useEffect(() => { loadProducts(); }, [page, fetchAll]);
 
   useEffect(() => {
     fetch('http://localhost:3001/api/categories')
@@ -76,7 +101,7 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' , headers:{'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''}})
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
         .then(res => {
           if (res.ok) loadProducts();
         })
@@ -87,16 +112,19 @@ const ProductManagement = () => {
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
-      name: product.name,
+      name: product.name || '',
       price: product.productItems?.[0]?.price ?? '',
       quantity: product.productItems?.[0]?.quantity ?? '',
       images: product.productItems?.[0]?.images?.map(img => img.image_url) || [],
       category_id: product.category_id,
       description: product.description || '',
+      discount: product.productPromotions?.[0]?.promotion?.discount_rate 
+        ? Math.round(product.productPromotions[0].promotion.discount_rate * 100) 
+        : 0,
     });
     setShowForm(true);
   };
-  console.log(categories)
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -105,7 +133,7 @@ const ProductManagement = () => {
     }));
   };
 
-  const handleNumberChange = (name: 'price' | 'quantity') => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNumberChange = (name: 'price' | 'quantity' | 'discount') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -154,9 +182,10 @@ const ProductManagement = () => {
       }
 
       if (editingProduct) {
+        // Update existing product
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -169,7 +198,7 @@ const ProductManagement = () => {
         if (productItemId) {
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               price: formData.price,
               quantity: formData.quantity,
@@ -178,10 +207,22 @@ const ProductManagement = () => {
             }),
           });
         }
+
+        if (formData.discount > 0) {
+          await fetch('http://localhost:3001/api/product-promotions/set-discount', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product_id: editingProduct.id,
+              discount_rate: formData.discount / 100
+            })
+          });
+        }
       } else {
+        // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -193,7 +234,7 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' ,'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             price: formData.price,
             quantity: formData.quantity,
@@ -201,44 +242,95 @@ const ProductManagement = () => {
             images: formData.images.map(url => ({ image_url: url })),
           }),
         });
+
+        if (formData.discount > 0) {
+          await fetch('http://localhost:3001/api/product-promotions/set-discount', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product_id: newProduct.id,
+              discount_rate: formData.discount / 100
+            })
+          });
+        }
       }
 
       loadProducts();
       setShowForm(false);
       setEditingProduct(null);
+      setFormData({
+        name: '',
+        price: '',
+        quantity: '',
+        images: [],
+        category_id: 0,
+        description: '',
+        discount: 0,
+      });
 
     } catch (err) {
       console.error('Lỗi khi lưu sản phẩm:', err);
+      alert('Có lỗi xảy ra khi lưu sản phẩm. Vui lòng thử lại.');
     }
   };
 
+const filteredProducts = products.filter(p =>
+  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  p.description.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
+const totalPagesfill = Math.ceil(filteredProducts.length / limit);
+
+  const start = (page - 1) * limit;
+ const currentProducts = filteredProducts.slice(start, start + limit);
+
+  
   return (
+    
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
-          <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
+          <h3>{editingProduct ? 'Edit products' : 'Add new products'}</h3>
 
-          <label>Tên sản phẩm:
+
+          <label>Product name:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
           </label>
 
-          <label>Giá:
+          <label>Price:
             <input type="number" name="price" value={formData.price} onChange={handleNumberChange('price')} />
           </label>
 
-          <label>Số lượng:
+          <label>Quantity:
             <input type="number" name="quantity" value={formData.quantity} onChange={handleNumberChange('quantity')} />
           </label>
 
-          <label>Thêm ảnh:
+          <label>Discount(%):
+            <input
+              type="number"
+              name="discount"
+              value={formData.discount}
+              min={0}
+              max={100}
+              step={1}
+              onChange={handleNumberChange('discount')}
+            />
+          </label>
+
+          <label>Add images:
             <input type="file" accept="image/*" multiple onChange={handleFileChange} />
           </label>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 8 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
             {formData.images.map((img, idx) => (
               <div key={idx} style={{
-                position: 'relative', margin: 4, border: '1px solid #ddd',
-                borderRadius: 8, overflow: 'hidden', width: 100, height: 100,
+                position: 'relative' as const,
+                margin: '4px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                width: '100px',
+                height: '100px',
               }}>
                 <img src={img} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button
@@ -271,68 +363,146 @@ const ProductManagement = () => {
             ))}
           </div>
 
-          <label>Mô tả:
+          <label>Description:
+
             <textarea
               name="description"
               rows={3}
               value={formData.description}
               onChange={handleInputChange}
-              style={{ resize: "none", overflow: "auto", height: "50px", width: "100%" }}
+              style={{ resize: "none", overflow: "auto", height: "150px", width: "100%" }}
             />
           </label>
 
-          <label>Danh mục:
-            <select name="category_id" value={formData.category_id} onChange={handleInputChange}>
-              <option value="">-- Chọn danh mục --</option>
-              {categories?.filter(cat => cat.parent !== null)
-                  .map(cat => (
+          <label>
+            Category:
+            <select
+              value={formData.category_id}
+              onChange={e =>
+                setFormData({
+                  ...formData,
+                  category_id: Number(e.target.value),
+                })
+              }
+            >
+              <option value="">-- Select Category --</option>
+              {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
           </label>
 
-          <div style={{ marginTop: '10px' }}>
-            <button className="btn-edit" onClick={handleFormSubmit}>Lưu</button>
-            <button className="btn-delete" onClick={() => setShowForm(false)}>Huỷ</button>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <button className="btn-edit" onClick={handleFormSubmit}>
+              Save
+            </button>
+            <button className="btn-delete" onClick={() => setShowForm(false)}>
+              Cancel
+            </button>
           </div>
         </div>
       ) : (
-        <>
+        <><div style={{ marginBottom: 16, textAlign: 'center' }}>
+  <input
+    type="text"
+    placeholder=" Tìm kiếm sản phẩm theo tên..."
+    value={searchTerm}
+    onChange={(e) => {
+      setSearchTerm(e.target.value);
+      setPage(1); // Reset về trang đầu khi tìm
+    }}
+    style={{
+      padding: '8px 12px',
+      width: '300px',
+      borderRadius: '4px',
+      border: '1px solid #ccc',
+      fontSize: '14px'
+    }}
+  />
+</div>
+
           <table className="product-table">
             <thead>
               <tr>
-                <th>STT</th>
-                <th>Tên</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
-                <th>Danh mục</th>
-                <th>Ảnh</th>
-                <th>Hành động</th>
+                <th>No.</th>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Discount</th>
+                <th>Category</th>
+                <th>Image</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((p, index) => (
-                <tr key={p.id}>
-                  <td>{(page - 1) * limit + index + 1}</td>
-                  <td>{p.name}</td>
-                  <td>{p.productItems?.[0]?.price ? `${p.productItems[0].price.toLocaleString()}₫` : 'Không rõ'}</td>
-                  <td>{p.productItems?.[0]?.quantity ?? 'Không rõ'}</td>
-                  <td>{getCategoryName(p.category_id)}</td>
-                  <td>
-                    {p.productItems?.[0]?.images?.length ? (
-                      p.productItems[0].images.map((img, idx) => (
-                        <img key={idx} src={img.image_url} alt={p.name} width={60} style={{ margin: 4 }} />
-                      ))
-                    ) : (
-                      <span>Không có ảnh</span>
-                    )}
-                  </td>
-                  <td>
-                    <button className="btn-edit" onClick={() => handleEdit(p)}>Sửa</button>
-                    <button className="btn-delete" onClick={() => handleDelete(p.id)}>Xoá</button>
-                  </td>
-                </tr>
-              ))}
+              {currentProducts.map((p, index) => {
+                const originalPrice = p.productItems?.[0]?.price ?? 0;
+                const now = new Date();
+                const validPromotion = p.productPromotions?.find(
+                  pp => pp.promotion &&
+                    pp.promotion.start_at && pp.promotion.end_at &&
+                    new Date(pp.promotion.start_at) <= now &&
+                    new Date(pp.promotion.end_at) >= now
+                );
+                const discountRate = validPromotion?.promotion?.discount_rate ?? 0;
+                const newPrice = discountRate > 0 ? Math.round(originalPrice * (1 - discountRate)) : originalPrice;
+
+                return (
+                  <tr key={p.id}>
+                    <td style={{ textAlign: 'center' }}>{start + index + 1}</td>
+                    <td>{p.name || 'Không có tên'}</td>
+                    <td>
+                      {originalPrice ? (
+                        <>
+                          {discountRate > 0 ? (
+                            <>
+                              <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                                {originalPrice.toLocaleString()}₫
+                              </span>
+                              <br />
+                              <span style={{ color: '#e44d26', fontWeight: 'bold' }}>
+                                {newPrice.toLocaleString()}₫
+                              </span>
+                              <br />
+                              <span style={{ color: '#e44d26' }}>
+                                (-{Math.round(discountRate * 100)}%)
+                              </span>
+                            </>
+                          ) : (
+                            <span>{originalPrice.toLocaleString()}₫</span>
+                          )}
+                        </>
+                      ) : (
+                        'Không rõ'
+                      )}
+                    </td>
+                    <td>
+                      {discountRate > 0 ? `-${Math.round(discountRate * 100)}%` : ''}
+                    </td>
+                    <td>{getCategoryName(p.category_id)}</td>
+                    <td>
+                      {p.productItems?.[0]?.images?.length ? (
+                        p.productItems[0].images.map((img, idx) => (
+                          <img key={idx} src={img.image_url} alt={p.name} width={60} style={{ margin: 4 }} />
+                        ))
+                      ) : (
+                        <span>No Image</span>
+                      )}
+                    </td>
+                    <td>
+                    
+                      <button className="btn-edit" onClick={() => handleEdit(p)}>
+                        Edit
+                      </button>
+                      <button
+                        className="btn-delete"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
@@ -356,11 +526,11 @@ const ProductManagement = () => {
             <button className="btn-add" onClick={() => {
               setFormData({
                 name: '', price: '', quantity: '', images: [],
-                category_id: categories[0]?.id || 0, description: ''
+                category_id: categories[0]?.id || 0, description: '', discount: 0
               });
               setEditingProduct(null);
               setShowForm(true);
-            }}>+ Thêm sản phẩm</button>
+            }}>+ Add new products</button>
           </div>
         </>
       )}

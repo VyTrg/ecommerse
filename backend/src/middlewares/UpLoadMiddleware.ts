@@ -1,4 +1,14 @@
 import multer from "multer";
 
 const storage = multer.memoryStorage();
-export const upload = multer({ storage });
+
+export const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Chỉ chấp nhận file ảnh"));
+    }
+    cb(null, true);
+  },
+});

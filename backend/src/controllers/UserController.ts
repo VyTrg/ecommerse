@@ -9,8 +9,18 @@ const userService = new UserService();
 export class UserController {
     static async getAllUsers(req: Request, res: Response) {
         try {
-            const users = await userService.getAllUsers();
-            res.json(users);
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+
+            const [users, totalCount] = await userService.getAllUsersWithPagination(page, limit);
+
+            res.json({
+                data: users,
+                totalCount,
+                currentPage: page,
+                totalPages: Math.ceil(totalCount / limit)
+            });
+
         } catch (error) {
             res.status(500).json({ message: "Error fetching users", error });
         }
@@ -173,6 +183,16 @@ export class UserController {
         }
     }
 
+    static async getUserCount(req: Request, res: Response) {
+  try {
+    const count = await userService.countUsers();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: "Error counting users", error });
+  }
+}
+
+
     static async getCurrentUser(req: Request, res: Response){
         try {
             if (!req.body) {
@@ -269,6 +289,7 @@ export class UserController {
         }
     }
 
+
     static async changeInfo(req: Request, res: Response){
         try {
             if (!req.body) {
@@ -290,4 +311,5 @@ export class UserController {
             res.status(500).json({ message: 'Error fetching user', error });
         }
     }
+
 }
