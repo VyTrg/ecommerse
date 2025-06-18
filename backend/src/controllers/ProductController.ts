@@ -72,7 +72,6 @@ export class ProductController {
 
 
   static getAllProducts = async (req: Request, res: Response): Promise<void> => {
-
     try {
       const categoryName = req.query.category?.toString().toLowerCase();
       const page = req.query.page ? parseInt(req.query.page as string) : null;

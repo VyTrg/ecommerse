@@ -29,14 +29,29 @@ const OrderList: React.FC<{ userId: number }> = ({ userId }) => {
     const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
+        // const token = sessionStorage.getItem("token");
+
         fetch(`http://localhost:3001/api/orders/user/${userId}`, {
             headers: {
-                Authorization: `Bearer ${sessionStorage.getItem("token") || ""}`,
+                'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
             },
         })
-            .then((res) => res.json())
-            .then((data) => setOrders(data))
-            .catch((err) => console.error("Error fetching orders:", err));
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                if (!Array.isArray(data)) {
+                    throw new Error("Unexpected response format");
+                }
+                setOrders(data);
+            })
+            .catch((err) => {
+                console.error("Error fetching orders:", err);
+                setOrders([]);
+            });
     }, [userId]);
 
     const handleCancel = async (orderId: number) => {

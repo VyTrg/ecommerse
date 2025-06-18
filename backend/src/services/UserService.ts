@@ -4,7 +4,7 @@ import {Address} from "../entity/Address"
 import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
 import bcrypt from "bcrypt";
-import {getAdminToken, getKeycloakId} from "../middleware/keycloakToken";
+import {getAdminToken, getKeycloakId, reseterPassword} from "../middleware/keycloakToken";
 
 const userRepository = AppDataSource.getRepository(User);
 export class UserService {
@@ -103,6 +103,7 @@ async countUsers(): Promise<number> {
                 return false;
             }
             if(username || email || phone){
+
                 await this.userRepository.update(id, {username: username, email: email, phone: phone});
             }
             if(oldPassword && newPassword){
@@ -110,6 +111,8 @@ async countUsers(): Promise<number> {
                 if (!isPasswordValid) {
                     return false;
                 }
+                const accessToken  = await getAdminToken();
+                reseterPassword(accessToken, user.keycloakId, newPassword);
                 const hashedPassword = await bcrypt.hash(newPassword, 10);
                 await this.userRepository.update(id, {hash_password: hashedPassword});
             }

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
 import "../styles/SearchResult.css";
 
 interface ProductPromotion {
@@ -103,11 +105,13 @@ const SearchResult = () => {
                 }
 
                 return (
-                  <Link
-                    to={`/product/${product.id}`}
+
+                  <Link to={`/product/${product.id}`} className="product-card" key={product.id}>
+                  <div
                     className={`product-card ${isOnSale ? 'sale-product' : ''}`}
                     key={product.id}
                   >
+                    </div>
                     {isOnSale && <div className="sale-badge">SALE</div>}
                     <img
                       src={imageUrl}

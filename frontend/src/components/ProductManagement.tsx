@@ -46,6 +46,7 @@ type FormDataType = {
 const ProductManagement = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -283,12 +284,14 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
  const currentProducts = filteredProducts.slice(start, start + limit);
 
   
+
   return (
     
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
           <h3>{editingProduct ? 'Edit products' : 'Add new products'}</h3>
+
 
           <label>Product name:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
@@ -360,7 +363,6 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
             ))}
           </div>
 
-
           <label>Description:
 
             <textarea
@@ -385,7 +387,6 @@ const totalPagesfill = Math.ceil(filteredProducts.length / limit);
             >
               <option value="">-- Select Category --</option>
               {categories.map(cat => (
-
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>

@@ -7,8 +7,8 @@ export class User {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ name: 'keycloak_id', type: "nvarchar", length: 255, nullable: false, default: '' })
-  keycloakId!: string;
+@Column({ name: 'keycloakId', type: "nvarchar", length: 255, nullable: false, default: '' })
+keycloakId!: string;
 
 
 

@@ -35,6 +35,7 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
+
 app.use(express.json());
 app.use(session({
     secret: process.env.SECRET || 'app_secret',
@@ -50,29 +51,29 @@ app.use(keycloak.middleware());
 
 // Routes
 app.use("/api/users", keycloak.protect(isAuthenticated), UserRouter);
-app.use("/api/promotions",promotionRoutes);
-app.use("/api/sizes", sizeRoutes); //get for public
-app.use("/api/user-addresses", keycloak.protect(isAuthenticated),User_addressRoute);
-app.use("/api/reviews",keycloak.protect(isAuthenticated), ReviewRoutes);//get for public
-app.use("/api/shipping-methods",keycloak.protect(isAuthenticated), Shipping_methodRoutes);
-app.use("/api/products", productRoutes);//get for public
-app.use("/api/product-items", product_itemRoutes);//get for public
-app.use("/api/images", imageRoutes);//get for public
-app.use("/api/categories", categoryRoutes);//get for public
-app.use("/api/orders",orderRoutes);
-app.use("/api/addresses", addressRoutes);
-app.use("/api/statistics",keycloak.protect(adminOnly), StatisticsRoutes);
 
+app.use("/api/promotions", promotionRoutes);
+app.use("/api/sizes", sizeRoutes);
+app.use("/api/user-addresses", keycloak.protect(isAuthenticated), User_addressRoute);
+app.use("/api/reviews", keycloak.protect(isAuthenticated), ReviewRoutes);
+app.use("/api/shipping-methods", keycloak.protect(isAuthenticated), Shipping_methodRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/product-items", product_itemRoutes);
+app.use("/api/images", imageRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/orders", keycloak.protect(isAuthenticated), orderRoutes);
+app.use("/api/addresses", keycloak.protect(isAuthenticated), addressRoutes);
+app.use("/api/statistics", keycloak.protect(adminOnly), StatisticsRoutes);
+app.use("/api/order_items", keycloak.protect(isAuthenticated), Order_itemRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/order_items",Order_itemRoutes);
-app.use('/admin/api/orders', orderRoutes);
-// Serve static files from the uploads directory
+app.use("/admin/api/orders", keycloak.protect(isAuthenticated), adminOrderRoutes);
+app.use("/api/upload", keycloak.protect(adminOnly), uploadRoute);
+app.use("/api/invoice", keycloak.protect(isAuthenticated), invoice);
 
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-// app.use("/api/upload", uploadRoute);
-app.use("/api/invoice", invoice);
-app.use("/api/product-promotions", productPromotionRoutes);
-// DB + start server
+// Static upload files - only for admin
+app.use("/uploads", keycloak.protect(adminOnly), express.static(path.join(__dirname, "../uploads")));
+
+// DB connection
 AppDataSource.initialize()
     .then(() => {
         console.log(" Database connected successfully");
@@ -80,4 +81,4 @@ AppDataSource.initialize()
             console.log(` Server running at http://localhost:${PORT}`);
         });
     })
-    .catch((error) => console.log("Database connection error:", error));
+    .catch((error) => console.log(" Database connection error:", error));

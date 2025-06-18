@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/OrderManagement.css';
 import { useNavigate } from 'react-router-dom';
+// Import ConfirmDialog và Notification
 import ConfirmDialog from '../components/ConfirmDialog';
 import Notification from '../components/Notification';
 import InvoiceButton from "./InvoiceButton";
@@ -18,7 +19,6 @@ type Order = {
   guest_email?: string;
   guest_phone?: string;
   order_total: number;
-
   orderStatus: {
     id: number;
     status: string;
@@ -26,12 +26,15 @@ type Order = {
   orderDate: string;
 };
 
-
 const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
+  
 
   const navigate = useNavigate();
   const limit = 10;
@@ -44,12 +47,15 @@ const OrderManagement: React.FC = () => {
   } | null>(null);
 
   // State cho ConfirmDialog (modal xác nhận)
-  const [showConfirm, setShowConfirm] = useState<boolean>(false);
-  const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
+
 
   const loadOrders = () => {
     const query = `http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}`;
-    fetch(query)
+    fetch(query,{
+            headers:{
+              'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+            }
+          })
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data.data)) {
@@ -256,7 +262,6 @@ const OrderManagement: React.FC = () => {
               </tr>
             ))
           ) : (
-
             <tr><td colSpan={6}>Không có đơn hàng nào.</td></tr>
           )}
         </tbody>

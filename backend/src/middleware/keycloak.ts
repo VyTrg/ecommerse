@@ -25,11 +25,11 @@ Keycloak.prototype.accessDenied = function (request: Request, response: Response
 }
 
 const keycloak = new Keycloak({ store: memoryStore }, kcConfig);
-function adminOnly(token: any, request: Request, Response: Response) {
+function adminOnly(token: Token, request: Request, Response: Response) {
     return token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${ADMIN_ROLE}`);
 }
 
-function isAuthenticated(token: any, request: Request) {
+function isAuthenticated(token: Token, request: Request) {
     return token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${ADMIN_ROLE}`) || token.hasRole(`${process.env.KEYCLOAK_CLIENT_ID}:${USER_ROLE}`);
 }
 

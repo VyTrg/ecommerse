@@ -3,7 +3,7 @@ import { User, UserInput } from '../types/User';
 import UserForm from '../components/UserForm';
 import UserTable from '../components/UserTable';
 import '../styles/Usermanagement.css';
-import Pagination from '../components/Pagination';
+// import Pagination from '../components/Pagination';
 import { FaArrowLeft } from 'react-icons/fa';
 
 const UserManagement = () => {
@@ -33,24 +33,31 @@ const UserManagement = () => {
   useEffect(() => {
     loadUsers();
   }, [page]);
+
   useEffect(() => {
-    fetch('http://localhost:3001/api/users', {
+    fetch(`http://localhost:3001/api/users?page=${page}&limit=${limit}`, {
       headers: {
-        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+        'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
       }
     })
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => {
-        console.error('Failed to load users:', err);
+        .then(res => res.json())
+        .then(data => {
+          const arr = data?.data;
+          if (Array.isArray(arr)) {
+            setUsers(arr);
+            setTotalCount(data.totalCount || arr.length);
+          } else {
+            console.error("⚠️ Invalid user list:", data);
+          }
+        })
+        .catch(err => console.error('Error loading users:', err));
+  }, [page]);
 
-      });
-  }, []);
 
-  const handleAdd = () => {
-    setEditingUser(null);
-    setShowForm(true);
-  };
+  // const handleAdd = () => {
+  //   setEditingUser(null);
+  //   setShowForm(true);
+  // };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
