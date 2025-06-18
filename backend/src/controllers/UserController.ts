@@ -183,6 +183,16 @@ export class UserController {
         }
     }
 
+    static async getUserCount(req: Request, res: Response) {
+  try {
+    const count = await userService.countUsers();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: "Error counting users", error });
+  }
+}
+
+
     static async getCurrentUser(req: Request, res: Response){
         try {
             if (!req.body) {
@@ -279,6 +289,7 @@ export class UserController {
         }
     }
 
+
     static async changeInfo(req: Request, res: Response){
         try {
             if (!req.body) {
@@ -300,4 +311,5 @@ export class UserController {
             res.status(500).json({ message: 'Error fetching user', error });
         }
     }
+
 }

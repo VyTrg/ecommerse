@@ -6,6 +6,7 @@ import { AppDataSource } from "../config/datasource";
 import bcrypt from "bcrypt";
 import {getAdminToken, getKeycloakId} from "../middleware/keycloakToken";
 
+const userRepository = AppDataSource.getRepository(User);
 export class UserService {
     private userRepository: Repository<User>;
     private addressRepository: Repository<Address>;
@@ -90,6 +91,11 @@ export class UserService {
             where: { username: username, hash_password: password },
         });
     }
+
+async countUsers(): Promise<number> {
+    return await this.userRepository.count();
+}
+
     async changeInfor(id: number, username: string, email: string, phone: string, oldPassword: string, newPassword: string): Promise<boolean> {
         try {
             const user = await this.getUserById(id);
@@ -114,5 +120,6 @@ export class UserService {
         }
         return true;
     }
+
 
 }

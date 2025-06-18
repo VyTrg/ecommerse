@@ -11,7 +11,7 @@ const KEYCLOAK_ADMIN_PASSWORD = process.env.KEYCLOAK_ADMIN_PASSWORD!;
 const KEYCLOAK_CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET!;
 export async function getAdminToken() {
     const tokenResponse = await fetch(
-    `http://localhost:8080/realms/${REALM}/protocol/openid-connect/token`,
+    `http://keycloak:8080/realms/${REALM}/protocol/openid-connect/token`,
         {
             method: 'POST',
             headers: {
@@ -32,7 +32,7 @@ export async function getAdminToken() {
 
 export async function createUserOnKeycloak(adminToken: string, username: string, password: string, email: string ) {
     const userInfoResponse = await fetch(
-    `http://localhost:8080/admin/realms/${REALM}/users`,
+    `http://keycloak:8080/admin/realms/${REALM}/users`,
         {
             method: 'POST',
             headers: {
@@ -61,7 +61,7 @@ export async function createUserOnKeycloak(adminToken: string, username: string,
 
 export async function mapUserToRole(adminToken: string, keycloakId: string) {
     const clientResponse = await fetch(
-        `http://localhost:8080/admin/realms/${REALM}/clients?clientId=${KEYCLOAK_CLIENT_ID}`,
+        `http://keycloak:8080/admin/realms/${REALM}/clients?clientId=${KEYCLOAK_CLIENT_ID}`,
         {
             method: 'GET',
             headers: {
@@ -79,7 +79,7 @@ export async function mapUserToRole(adminToken: string, keycloakId: string) {
     const clientId = client.id;
 
     const rolesResponse = await fetch(
-        `http://localhost:8080/admin/realms/${REALM}/clients/${clientId}/roles`,
+        `http://keycloak:8080/admin/realms/${REALM}/clients/${clientId}/roles`,
         {
             method: 'GET',
             headers: {
@@ -94,7 +94,7 @@ export async function mapUserToRole(adminToken: string, keycloakId: string) {
         throw new Error('Role "user" not found for client express-api');
     }
     await fetch(
-        `http://localhost:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
+        `http://keycloak:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
         {
             method: 'POST',
             headers: {
@@ -113,7 +113,7 @@ export async function mapUserToRole(adminToken: string, keycloakId: string) {
 
 export async function getAccessToken(username: string, password: string) {
     const tokenResponse = await fetch(
-        `http://localhost:8080/realms/${REALM}/protocol/openid-connect/token`,
+        `http://keycloak:8080/realms/${REALM}/protocol/openid-connect/token`,
         {
             method: 'POST',
             headers: {
@@ -134,7 +134,7 @@ export async function getAccessToken(username: string, password: string) {
 }
 export async function getKeycloakId(adminToken: string, username: string, password: string) {
     const userInfoResponse = await fetch(
-        `http://localhost:8080/admin/realms/${REALM}/users`,
+        `http://keycloak:8080/admin/realms/${REALM}/users`,
         {
             method: 'POST',
             headers: {

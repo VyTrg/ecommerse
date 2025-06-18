@@ -2,6 +2,9 @@ import { DataSource, Repository } from "typeorm";
 import { Order } from "../entity/Order";
 import { OrderItem } from "../entity/OrderItems";
 import { AppDataSource } from "../config/datasource";
+
+const orderRepository = AppDataSource.getRepository(Order);
+
 import { Order_status } from "../entity/Order_status";
 
 
@@ -140,7 +143,10 @@ async getAllOrders(page: number, limit: number) {
     return this.orderItemRepository.save(orderItem);
   }
 
-  // Cập nhật trạng thái đơn hàng bằng status text
+async getOrderCount(): Promise<number> {
+  return await this.orderRepository.count();
+}
+
 async updateOrderStatusByText(orderId: number, statusText: string): Promise<Order | null> {
   const order = await this.orderRepository.findOne({
     where: { id: orderId },
@@ -158,30 +164,40 @@ async updateOrderStatusByText(orderId: number, statusText: string): Promise<Orde
 
   return this.orderRepository.save(order);
 }
-  async getOrdersByUserId(userId: number): Promise<Order[]> {
-    return this.orderRepository.find({
-      where: { user: { id: userId } },
-      relations: ["user", "shippingAddress", "shippingMethod", "orderStatus", "orderItems", "orderItems.productItem"]
-    });
-  }
-  async updateStatus(orderId: number, statusId: number): Promise<Order | null> {
-    const order = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ["orderStatus", "user", "shippingAddress"],
-    });
 
-    if (!order) return null;
-
-    const status = await this.statusRepository.findOneBy({ id: statusId });
-    if (!status) throw new Error("Order status not found");
-
-    order.orderStatus = status;
-    await this.orderRepository.save(order);
-
-    // Load lại đầy đủ dữ liệu sau khi save
-    return this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ["user", "orderStatus", "shippingAddress"],
-    });
-  }
+async getOrdersByUserId(userId: number): Promise<Order[]> {
+  return this.orderRepository.find({
+    where: { user: { id: userId } },
+    relations: [
+      "user",
+      "shippingAddress",
+      "shippingMethod",
+      "orderStatus",
+      "orderItems",
+      "orderItems.productItem"
+    ]
+  });
 }
+
+async updateStatus(orderId: number, statusId: number): Promise<Order | null> {
+  const order = await this.orderRepository.findOne({
+    where: { id: orderId },
+    relations: ["orderStatus", "user", "shippingAddress"],
+  });
+
+  if (!order) return null;
+
+  const status = await this.statusRepository.findOneBy({ id: statusId });
+  if (!status) throw new Error("Order status not found");
+
+  order.orderStatus = status;
+  await this.orderRepository.save(order);
+
+  return this.orderRepository.findOne({
+    where: { id: orderId },
+    relations: ["user", "orderStatus", "shippingAddress"],
+  });
+}
+
+}
+

@@ -1,30 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/OrderManagement.css';
 import { useNavigate } from 'react-router-dom';
-// Import ConfirmDialog và Notification
 import ConfirmDialog from '../components/ConfirmDialog';
 import Notification from '../components/Notification';
 import InvoiceButton from "./InvoiceButton";
 
 type Order = {
   id: number;
-  user: { fullName: string } | null;
+  user: {
+    id: number;
+    fullName?: string;
+    username?: string;
+    phone?: string;
+    email?: string;
+  } | null;
   guest_name?: string;
   guest_email?: string;
   guest_phone?: string;
   order_total: number;
 
+  orderStatus: {
+    id: number;
+    status: string;
+  } | null;
   orderDate: string;
-  orderStatus: { status: string } | null;
 };
 
-const OrderManagement = () => {
+
+const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(1);
-  const limit = 10;
   const [totalCount, setTotalCount] = useState(0);
-  const totalPages = Math.ceil(totalCount / limit);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const navigate = useNavigate();
+  const limit = 10;
+  const totalPages = Math.ceil(totalCount / limit);
 
   // State cho Notification (toast)
   const [notification, setNotification] = useState<{
@@ -37,12 +48,10 @@ const OrderManagement = () => {
   const [orderToDelete, setOrderToDelete] = useState<number | null>(null);
 
   const loadOrders = () => {
-    fetch(`http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}`)
+    const query = `http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}&search=${encodeURIComponent(searchTerm)}`;
+    fetch(query)
       .then((res) => res.json())
       .then((data) => {
- console.log("📦 Fetching orders from backend:", `http://localhost:3001/admin/api/orders?page=${page}&limit=${limit}`);
-
-
         if (Array.isArray(data.data)) {
           setOrders(data.data);
           setTotalCount(data.totalCount || 0);
@@ -73,122 +82,129 @@ const OrderManagement = () => {
     }
   };
 
-  // 3. Nếu user bấm "Yes" trong ConfirmDialog → thực sự delete
   const handleConfirmDelete = () => {
     if (orderToDelete === null) {
       setShowConfirm(false);
       return;
     }
 
-    fetch(`http://localhost:3001/api/orders/${orderToDelete}`, { method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},})
-        .then(res => {
-          if (res.ok) {
-            setOrders(prev => prev.filter(o => o.id !== orderToDelete));
-            setNotification({ message: 'Order deleted successfully!', type: 'success' });
-          } else {
-            console.error('Delete failed:', res.statusText);
-            setNotification({ message: `Delete failed: ${res.statusText}`, type: 'error' });
-          }
-        })
-        .catch(err => {
-          console.error('Error deleting order:', err);
-          setNotification({ message: `Error deleting: ${err.message}`, type: 'error' });
-        })
-        .finally(() => {
-          setShowConfirm(false);
-          setOrderToDelete(null);
-        });
+    fetch(`http://localhost:3001/api/orders/${orderToDelete}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (sessionStorage.getItem('token') || '')
+      },
+    })
+      .then(res => {
+        if (res.ok) {
+          setOrders(prev => prev.filter(o => o.id !== orderToDelete));
+          setNotification({ message: 'Order deleted successfully!', type: 'success' });
+        } else {
+          setNotification({ message: `Delete failed: ${res.statusText}`, type: 'error' });
+        }
+      })
+      .catch(err => {
+        console.error('Error deleting order:', err);
+        setNotification({ message: `Error deleting: ${err.message}`, type: 'error' });
+      })
+      .finally(() => {
+        setShowConfirm(false);
+        setOrderToDelete(null);
+      });
   };
 
-  // 4. Nếu user bấm "No" → ẩn ConfirmDialog
   const handleCancelDelete = () => {
     setShowConfirm(false);
     setOrderToDelete(null);
   };
 
-  // 5. Điều hướng tới trang Detail
   const goToDetail = (id: number) => {
     navigate(`/admin/orders/${id}`);
   };
 
-  // 6. Cập nhật trạng thái đơn hàng (giữ nguyên logic trước)
   const updateOrderStatus = (orderId: number, newStatus: string) => {
     fetch(`http://localhost:3001/api/orders/${orderId}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (sessionStorage.getItem('token') || '')
+      },
       body: JSON.stringify({ status: newStatus }),
     })
-        .then(async res => {
-          if (!res.ok) {
-            let msg = `Server responded with ${res.status}`;
-            try {
-              const errJson = await res.json();
-              if (errJson?.message) msg += `: ${errJson.message}`;
-            } catch {
-              console.error('Error parsing server response:', res);
-            }
-            throw new Error(msg);
-          }
-          return res.json();
-        })
-        .then((resp) => {
-          const updated = resp.order;
-          if (!updated || !updated.orderStatus) {
-            console.error('Unexpected response format:', resp);
-            setNotification({ message: 'Unexpected server response.', type: 'error' });
-            return;
-          }
-          setOrders(prev =>
-              prev.map(o =>
-                  o.id === orderId
-                      ? {
-                        ...o,
-                        orderStatus: {
-                          id: updated.orderStatus!.id,
-                          status: updated.orderStatus!.status,
-                        },
-                      }
-                      : o
-              )
-          );
-          setNotification({ message: 'Status updated successfully!', type: 'success' });
-        })
-        .catch(err => {
-          console.error('Error updating order status:', err);
-          setNotification({ message: `Cannot update status: ${err.message}`, type: 'error' });
-        });
+      .then(async res => {
+        if (!res.ok) {
+          let msg = `Server responded with ${res.status}`;
+          try {
+            const errJson = await res.json();
+            if (errJson?.message) msg += `: ${errJson.message}`;
+          } catch {}
+          throw new Error(msg);
+        }
+        return res.json();
+      })
+      .then((resp) => {
+        const updated = resp.order;
+        if (!updated || !updated.orderStatus) {
+          setNotification({ message: 'Unexpected server response.', type: 'error' });
+          return;
+        }
+        setOrders(prev =>
+          prev.map(o =>
+            o.id === orderId
+              ? { ...o, orderStatus: updated.orderStatus }
+              : o
+          )
+        );
+        setNotification({ message: 'Status updated successfully!', type: 'success' });
+      })
+      .catch(err => {
+        setNotification({ message: `Cannot update status: ${err.message}`, type: 'error' });
+      });
   };
 
   return (
-      <div className="order-container">
-        {/* Render Notification nếu có */}
-        {notification && (
-            <Notification
-                message={notification.message}
-                type={notification.type}
-                onClose={() => setNotification(null)}
-            />
-        )}
-
-        {/* Render ConfirmDialog nếu showConfirm === true */}
-        <ConfirmDialog
-            visible={showConfirm}
-            message="Are you sure you want to delete this order?"
-            onConfirm={handleConfirmDelete}
-            onCancel={handleCancelDelete}
+    <div className="order-container">
+      {/* Notification */}
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
         />
+      )}
 
-        <table className="order-table">
-          <thead>
+      {/* ConfirmDialog */}
+      <ConfirmDialog
+        visible={showConfirm}
+        message="Are you sure you want to delete this order?"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      {/* Tìm kiếm */}
+      <div className="search-bar">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Tìm theo tên, email hoặc ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button className="search-button" onClick={() => { setPage(1); loadOrders(); }}>
+          Tìm
+        </button>
+      </div>
+
+      {/* Bảng đơn hàng */}
+      <table className="order-table">
+        <thead>
           <tr>
-            
-            <th>ID</th>
-            <th>Customer</th>
-            <th>Total Amount</th>
-            <th>Status</th>
-            <th>Order Date</th>
-            <th>Action</th>
+            <th>STT</th>
+            <th>Khách hàng</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+            <th>Ngày đặt</th>
+            <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
@@ -240,11 +256,13 @@ const OrderManagement = () => {
               </tr>
             ))
           ) : (
+
             <tr><td colSpan={6}>Không có đơn hàng nào.</td></tr>
           )}
         </tbody>
       </table>
 
+      {/* Phân trang */}
       {totalPages > 1 && (
         <div style={{ textAlign: 'center', marginTop: 20 }}>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
@@ -261,7 +279,6 @@ const OrderManagement = () => {
         </div>
       )}
     </div>
-
   );
 };
 

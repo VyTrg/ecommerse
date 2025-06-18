@@ -12,7 +12,7 @@ import MyAccount from "./pages/MyAccount";
 import ItemPage from "./pages/ItemPage";
 import LoginSection from "./pages/LoginSection";
 import RegisterSection from "./pages/RegisterSection";
-// import ShoppingCartPopup from "./components/ShoppingCartPopup";
+
 import ForgotPassword from "./components/ForgotPassword";
 import ProductManagement from "./components/ProductManagement";
 import OrderManagement from "./components/OrderManagement";
@@ -43,6 +43,8 @@ const App = () => {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />
+          {/* <Route path="/category/:id" element={<CategoryPage />} /> */}
+
           <Route path="/clothing" element={<ClothingPage />} />
           <Route path="/swimwear" element={<Swimwear />} />
           <Route path="/accessories" element={<AccessoriesPage />} />
@@ -66,7 +68,7 @@ const App = () => {
             <Route path="products" element={<ProductManagement />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="orders" element={<OrderManagement />} />
-            <Route path="orders/:id" element={<OrderDetails />} />  {/* 🟢 Thêm chi tiết admin */}
+            <Route path="orders/:id" element={<OrderDetails />} />  {/* Thêm chi tiết admin */}
             <Route path="categories" element={<CategoryAdminPage />} />
 
             <Route path="/admin/orders/:id" element={<OrderDetailPage />} />

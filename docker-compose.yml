@@ -41,6 +41,11 @@ services:
       DB_LOGGING: "true"
       DB_ENCRYPT: "false"
       SECRET: app_secret
+      KEYCLOAK_CLIENT_ID: express-api
+      KEYCLOAK_REALM: ecommserse
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_CLIENT_SECRET: YOUR_KEYCLOAK_CLIENT_SECRET
     depends_on:
       - mssql
       - keycloak

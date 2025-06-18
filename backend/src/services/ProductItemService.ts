@@ -5,7 +5,9 @@ import { Size } from "../entity/Size";
 import { Color } from "../entity/Color";
 import { Image } from "../entity/Image";
 import { AppDataSource } from "../config/datasource";
+import { In } from "typeorm";
 
+const repo = AppDataSource.getRepository(ProductItem);
 export class ProductItemService {
   private productItemRepository: Repository<ProductItem>;
   private productRepository: Repository<Product>;
@@ -124,5 +126,28 @@ export class ProductItemService {
       image.image_url = img.image_url;
       return image;
     });
+  }
+  
+  async getPaginatedProductItems(page: number, limit: number, categoryIds: number[]) {
+    const productItemRepo = AppDataSource.getRepository(ProductItem);
+    const skip = (page - 1) * limit;
+
+    const query = productItemRepo
+      .createQueryBuilder("productItem")
+      .leftJoinAndSelect("productItem.product", "product")
+      .leftJoinAndSelect("productItem.images", "images")
+      .leftJoinAndSelect("product.productPromotions", "productPromotions")
+      .leftJoinAndSelect("productPromotions.promotion", "promotion");
+
+    if (categoryIds.length > 0) {
+      query.where("product.category_id IN (:...categoryIds)", { categoryIds });
+    }
+
+    const [data, totalCount] = await query
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return { data, totalCount };
   }
 }

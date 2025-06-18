@@ -5,6 +5,7 @@ import UserTable from '../components/UserTable';
 import '../styles/Usermanagement.css';
 import Pagination from '../components/Pagination';
 import { FaArrowLeft } from 'react-icons/fa';
+
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -16,19 +17,22 @@ const UserManagement = () => {
   const totalPages = Math.ceil(totalCount / limit);
 
   const loadUsers = () => {
-    fetch(`http://localhost:3001/api/users?page=${page}&limit=${limit}`)
+    fetch(`http://localhost:3001/api/users?page=${page}&limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
-        setUsers(data.data || []);      // data.users hoặc data.data tùy API
+        setUsers(data.data || []);
         setTotalCount(data.totalCount || 0);
       })
-      .catch(err => console.error('Lỗi khi tải người dùng:', err));
+      .catch(err => console.error('Error loading users:', err));
   };
 
   useEffect(() => {
     loadUsers();
   }, [page]);
-
   useEffect(() => {
     fetch('http://localhost:3001/api/users', {
       headers: {
@@ -64,9 +68,8 @@ const UserManagement = () => {
         redirect: 'manual'
       })
         .then(res => {
-
-          if (res.ok) loadUsers(); // Reload page
-          else console.error('Xoá thất bại');
+          if (res.ok) loadUsers();
+          else console.error('Failed to delete user');
         })
         .catch(err => console.error('Error deleting user:', err));
     }
@@ -74,10 +77,12 @@ const UserManagement = () => {
 
   const handleFormSubmit = (user: UserInput | User) => {
     if ('id' in user) {
-      // 👉 SỬA
       fetch(`http://localhost:3001/api/users/${user.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' , 'Authorization': `Bearer ${sessionStorage.getItem('token')}`},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
+        },
         body: JSON.stringify(user),
       })
         .then(res => res.json())
@@ -87,7 +92,6 @@ const UserManagement = () => {
         })
         .catch(err => console.error('Error updating user:', err));
     } else {
-      // 👉 THÊM
       fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,8 +106,8 @@ const UserManagement = () => {
           setShowForm(false);
         })
         .catch(err => {
-          console.error('Error add user:', err);
-          alert('Email already exists or invalid data!');
+          console.error('Error adding user:', err);
+          alert('Email already exists or data is invalid!');
         });
     }
   };
@@ -111,37 +115,29 @@ const UserManagement = () => {
   const handleCancel = () => {
     setShowForm(false);
   };
-  // const totalCount = users.length;
-  // const totalPages = Math.ceil(totalCount / limit);
+
   const start = (page - 1) * limit;
   const currentUsers = users.slice(start, start + limit);
+
   return (
     <div className="user-management-container">
-      <h2 className="user-management-title">Users</h2>
-
-      {/*{!showForm && (*/}
-      {/*  <div className="user-management-action">*/}
-      {/*    /!*<button className="btn-add" onClick={handleAdd}>Add User</button>*!/*/}
-      {/*  </div>*/}
-      {/*)}*/}
+      <h2 className="user-management-title">User Management</h2>
 
       {showForm ? (
-          <>
-            <button onClick={handleCancel} className="back-button">
-              <FaArrowLeft />
-              Back
-            </button>
+        <>
+          <button onClick={handleCancel} className="back-button">
+            <FaArrowLeft /> Back
+          </button>
 
-            <UserForm
-                initialData={editingUser || undefined}
-                onSubmit={handleFormSubmit}
-                onCancel={handleCancel}
-            />
-          </>
+          <UserForm
+            initialData={editingUser || undefined}
+            onSubmit={handleFormSubmit}
+            onCancel={handleCancel}
+          />
+        </>
       ) : (
         <>
-
-          <UserTable users={users} onEdit={handleEdit} onDelete={handleDelete} />
+          <UserTable users={currentUsers} onEdit={handleEdit} onDelete={handleDelete} />
 
           {totalPages > 1 && (
             <div style={{ textAlign: 'center', marginTop: 20 }}>
@@ -166,6 +162,5 @@ const UserManagement = () => {
     </div>
   );
 };
-
 
 export default UserManagement;

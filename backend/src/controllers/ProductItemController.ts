@@ -79,4 +79,26 @@ export class ProductItemController {
       res.status(500).json({ message: "Error deleting product item", error });
     }
   }
+  static async getPaginatedProductItems(req: Request, res: Response) {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 12;
+    const categoryIds = (req.query.categoryIds as string || "")
+      .split(",")
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
+
+    const { data, totalCount } = await productItemService.getPaginatedProductItems(
+      page,
+      limit,
+      categoryIds
+    );
+
+    res.json({ data, totalCount });
+  } catch (error) {
+    console.error(" Error getPaginatedProductItems:", error);
+    res.status(500).json({ message: "Error fetching paginated product items", error });
+  }
+}
+
 }

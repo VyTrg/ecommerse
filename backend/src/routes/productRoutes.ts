@@ -12,5 +12,6 @@ router.put("/:id",keycloak.protect(adminOnly), ProductController.updateProduct);
 router.delete("/:id", keycloak.protect(adminOnly),ProductController.deleteProduct);
 
 
+
 export default router;
 

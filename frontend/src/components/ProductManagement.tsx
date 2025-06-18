@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ProductManagement.css';
+import Pagination from '../components/Pagination';
 
 type ProductItem = {
   id: number;
@@ -29,7 +30,7 @@ type Product = {
 type Category = {
   id: number;
   name: string;
-  parent: number | null;
+  parent_id: number | null;
 };
 
 type FormDataType = {
@@ -44,6 +45,7 @@ type FormDataType = {
 
 const ProductManagement = () => {
 
+  const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -98,7 +100,7 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' , headers:{'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''}})
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
         .then(res => {
           if (res.ok) loadProducts();
         })
@@ -121,7 +123,7 @@ const ProductManagement = () => {
     });
     setShowForm(true);
   };
-  console.log(categories)
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -182,7 +184,7 @@ const ProductManagement = () => {
         // Update existing product
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -195,7 +197,7 @@ const ProductManagement = () => {
         if (productItemId) {
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               price: formData.price,
               quantity: formData.quantity,
@@ -218,7 +220,7 @@ const ProductManagement = () => {
         // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' , 'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -230,7 +232,7 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' ,'Authorization': 'Bearer ' + sessionStorage.getItem('token') || ''},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             price: formData.price,
             quantity: formData.quantity,
@@ -270,28 +272,37 @@ const ProductManagement = () => {
     }
   };
 
-  const start = (page - 1) * limit;
-  const currentProducts = products.slice(start, start + limit);
+const filteredProducts = products.filter(p =>
+  p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  p.description.toLowerCase().includes(searchTerm.toLowerCase())
+);
 
+const totalPagesfill = Math.ceil(filteredProducts.length / limit);
+
+  const start = (page - 1) * limit;
+ const currentProducts = filteredProducts.slice(start, start + limit);
+
+  
   return (
+    
     <div className="product-table-container">
       {showForm ? (
         <div className="form-popup">
-          <h3>{editingProduct ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}</h3>
+          <h3>{editingProduct ? 'Edit products' : 'Add new products'}</h3>
 
-          <label>Tên sản phẩm:
+          <label>Product name:
             <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
           </label>
 
-          <label>Giá:
+          <label>Price:
             <input type="number" name="price" value={formData.price} onChange={handleNumberChange('price')} />
           </label>
 
-          <label>Số lượng:
+          <label>Quantity:
             <input type="number" name="quantity" value={formData.quantity} onChange={handleNumberChange('quantity')} />
           </label>
 
-          <label>Giảm giá (%):
+          <label>Discount(%):
             <input
               type="number"
               name="discount"
@@ -303,7 +314,7 @@ const ProductManagement = () => {
             />
           </label>
 
-          <label>Thêm ảnh:
+          <label>Add images:
             <input type="file" accept="image/*" multiple onChange={handleFileChange} />
           </label>
 
@@ -349,16 +360,18 @@ const ProductManagement = () => {
             ))}
           </div>
 
-          <label>Mô tả:
+
+          <label>Description:
 
             <textarea
               name="description"
               rows={3}
               value={formData.description}
               onChange={handleInputChange}
-              style={{ resize: "none", overflow: "auto", height: "50px", width: "100%" }}
+              style={{ resize: "none", overflow: "auto", height: "150px", width: "100%" }}
             />
           </label>
+
           <label>
             Category:
             <select
@@ -389,7 +402,25 @@ const ProductManagement = () => {
           </div>
         </div>
       ) : (
-        <>
+        <><div style={{ marginBottom: 16, textAlign: 'center' }}>
+  <input
+    type="text"
+    placeholder=" Tìm kiếm sản phẩm theo tên..."
+    value={searchTerm}
+    onChange={(e) => {
+      setSearchTerm(e.target.value);
+      setPage(1); // Reset về trang đầu khi tìm
+    }}
+    style={{
+      padding: '8px 12px',
+      width: '300px',
+      borderRadius: '4px',
+      border: '1px solid #ccc',
+      fontSize: '14px'
+    }}
+  />
+</div>
+
           <table className="product-table">
             <thead>
               <tr>
@@ -499,7 +530,7 @@ const ProductManagement = () => {
               });
               setEditingProduct(null);
               setShowForm(true);
-            }}>+ Thêm sản phẩm</button>
+            }}>+ Add new products</button>
           </div>
         </>
       )}

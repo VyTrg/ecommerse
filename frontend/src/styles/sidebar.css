@@ -197,21 +197,33 @@ input[type="range"]::-moz-range-thumb {
   height: 16px;
   display: inline-block;
   margin-right: 10px;
-  border-radius: 50%;
+  border-radius: 80%;
   border: 1px solid #ccc;
 }
 
 .color-box.blue { background-color: #94c8ff; }
-.color-box.dark-blue { background-color: #004080; }
+.color-box.black { background-color: #000000; }
 .color-box.fuschia { background-color: #18ff70; }
-.color-box.gold { background-color: #ffd700; }
+.color-box.pink { background-color: #ffb6c1; }
 .color-box.green { background-color: #28a745; }
-.color-box.light-pink { background-color: #ffb6c1; }
+.color-box.white { background-color: #ffffff; }
 .color-box.red { background-color: #dc3545; }
 .color-box.brown { background-color: #8b4513; }
 .color-box.yellow { background-color: #ffc107; }
 .color-box.purple { background-color: #6f42c1; }
+.color-filter li.active {
+  background-color: #98f1fd;
+  border-radius: 6px;
+  font-weight: bold;
+  padding: 4px;
+  cursor: pointer;
+}
 
+/* Viền nổi bật khi được chọn */
+.color-filter li.active .color-box {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
 /* Size filter */
 .size-filter {
   margin-top: 10px;

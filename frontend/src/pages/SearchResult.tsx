@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import "../styles/SearchResult.css";
 
 interface ProductPromotion {
@@ -103,10 +103,10 @@ const SearchResult = () => {
                 }
 
                 return (
-                  <div
+                  <Link
+                    to={`/product/${product.id}`}
                     className={`product-card ${isOnSale ? 'sale-product' : ''}`}
                     key={product.id}
-                    onClick={() => handleProductClick(product.id)}
                   >
                     {isOnSale && <div className="sale-badge">SALE</div>}
                     <img
@@ -134,7 +134,7 @@ const SearchResult = () => {
                         </span>
                       )}
                     </p>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

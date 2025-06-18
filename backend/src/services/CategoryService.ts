@@ -4,7 +4,7 @@ import { AppDataSource } from "../config/datasource";
 import { NotFoundException } from "@nestjs/common";
 import util from "util";
 
-// Khai báo type input gọn gàng
+// Khai báo type input 
 interface CategoryInput {
     name: string;
     parent_id?: number | null;
