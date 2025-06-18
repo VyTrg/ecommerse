@@ -35,6 +35,7 @@ const UserManagement = () => {
   useEffect(() => {
     fetch(`http://localhost:3001/api/users?page=${page}&limit=${limit}`, {
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
       }
     })
@@ -66,6 +67,7 @@ const UserManagement = () => {
       fetch(`http://localhost:3001/api/users/${id}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionStorage.getItem('token') || ''}`
         },
         credentials: "include",

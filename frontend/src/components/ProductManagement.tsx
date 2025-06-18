@@ -101,7 +101,11 @@ const ProductManagement = () => {
 
   const handleDelete = (id: number) => {
     if (window.confirm('Xác nhận xoá sản phẩm này?')) {
-      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' })
+      fetch(`http://localhost:3001/api/products/${id}`, { method: 'DELETE' ,
+          headers:{
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          }
+        })
         .then(res => {
           if (res.ok) loadProducts();
         })
@@ -156,6 +160,9 @@ const ProductManagement = () => {
 
           const res = await fetch('http://localhost:3001/api/upload', {
             method: 'POST',
+            headers:{
+              'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+            },
             body: formDataUpload,
           });
 
@@ -185,7 +192,11 @@ const ProductManagement = () => {
         // Update existing product
         await fetch(`http://localhost:3001/api/products/${editingProduct.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+
+        },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -198,7 +209,10 @@ const ProductManagement = () => {
         if (productItemId) {
           await fetch(`http://localhost:3001/api/product-items/${productItemId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+         },
             body: JSON.stringify({
               price: formData.price,
               quantity: formData.quantity,
@@ -211,7 +225,12 @@ const ProductManagement = () => {
         // Luôn gọi API set discount, kể cả khi discount = 0
         await fetch('http://localhost:3001/api/product-promotions/set-discount', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+
+        },
           body: JSON.stringify({
             product_id: editingProduct.id,
             discount_rate: formData.discount / 100
@@ -221,7 +240,10 @@ const ProductManagement = () => {
         // Create new product
         const res = await fetch('http://localhost:3001/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' ,
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+        },
           body: JSON.stringify({
             name: formData.name,
             description: formData.description,
@@ -233,7 +255,10 @@ const ProductManagement = () => {
 
         await fetch(`http://localhost:3001/api/product-items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+         },
           body: JSON.stringify({
             price: formData.price,
             quantity: formData.quantity,
@@ -245,7 +270,9 @@ const ProductManagement = () => {
         if (formData.discount > 0) {
           await fetch('http://localhost:3001/api/product-promotions/set-discount', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json' ,
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          },
             body: JSON.stringify({
               product_id: newProduct.id,
               discount_rate: formData.discount / 100

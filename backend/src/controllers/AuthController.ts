@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthService } from "../services/AuthService";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import {getAccessToken} from "../middleware/keycloakToken";
 
 interface RegisterRequestBody {

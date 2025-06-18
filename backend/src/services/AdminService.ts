@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import { Admin } from "../entity/Admin";
 import { AppDataSource } from "../config/datasource";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export class AdminService {
     private adminRepository: Repository<Admin>;

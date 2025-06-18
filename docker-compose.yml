@@ -1,58 +1,88 @@
+version: "3.8"
+
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DB_TYPE: ${DB_TYPE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_POST}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      USER_ROLE: ${USER_ROLE}
+      ADMIN_ROLE: ${ADMIN_ROLE}
+      SECRET: ${SECRET}
+
+      CLOUD_NAME: ${CLOUD_NAME}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+      
+    depends_on:
+      mssql:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.7
     ports:
       - "8080:8080"
-    command: start-dev
+    command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
 #      KEYCLOAK_DATABASE_VENDOR: mssql
 #      KC_DB: dev-file
 
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8080
+#      KC_HOSTNAME: localhost
+#      KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
-
+    depends_on:
+      mssql:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend/src/keycloak:/opt/keycloak/data/import
   mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: Y
-      SA_PASSWORD: "12345"
-      MSSQL_PID: Developer
+    build:
+      context: .
+      dockerfile: Dockerfile.mssql
     ports:
       - "1433:1433"
-    volumes:
-      - mssql_data:/var/opt/mssql
-
-  backend:
-    build: ./backend
-    ports:
-      - "3001:3001"
     environment:
-      DB_TYPE: mssql
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_USERNAME: sa
-      DB_PASSWORD: P@ssw0rd
-      DB_NAME: ecommerce
-      DB_SYNCHRONIZE: "true"
-      DB_LOGGING: "true"
-      DB_ENCRYPT: "false"
-      SECRET: app_secret
-    depends_on:
-      - mssql
-      - keycloak
-    command: bash -c "npm install && npm run build && npm run start"
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    command: bash -c "npm install && npm run build && npm run preview"
-
-volumes:
-  mssql_data:
+      SA_PASSWORD: ${DB_PASSWORD}
+      ACCEPT_EULA: "Y"
+    volumes:
+      - ./init:/init
+    command: /bin/bash /init/entrypoint.sh
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1' | /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"Huy19082004@\" || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped

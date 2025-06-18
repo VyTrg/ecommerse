@@ -56,7 +56,11 @@ const SaleProductList: React.FC<SaleProductListProps> = ({
     (async () => {
       try {
         // Ưu tiên lấy từ /api/products/sale nếu có, fallback sang /api/products
-        let res = await fetch('http://localhost:3001/api/products/sale');
+        let res = await fetch('http://localhost:3001/api/products/sale',{
+          headers:{
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          }
+        });
         if (!res.ok) res = await fetch('http://localhost:3001/api/products');
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();

@@ -75,6 +75,10 @@ const handlePlaceOrder = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+
+
       },
       body: JSON.stringify(payload),
     });
@@ -100,7 +104,10 @@ console.log("ORDER CREATED:", createdOrder);
     
     const invoiceRes = await fetch("http://localhost:3001/api/invoice/generate-invoice", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" ,
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+         },
       body: JSON.stringify({ orderData: orderForPdf }),
     });
 

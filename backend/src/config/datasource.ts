@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: process.env.DB_SYNCHRONIZE === "true",
   logging: process.env.DB_LOGGING === "true",
-  entities: ["src/entity/*.ts"],
+  entities: [__dirname + "/../entity/**/*.js"],
   options: {
     encrypt: process.env.DB_ENCRYPT === "true",
   },

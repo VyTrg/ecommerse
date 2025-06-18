@@ -1,6 +1,6 @@
 import { AppDataSource } from "../config/datasource";
 import { User } from "../entity/User";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import {createUserOnKeycloak, getAccessToken, getAdminToken, mapUserToRole} from "../middleware/keycloakToken";
 
 export const AuthService = {

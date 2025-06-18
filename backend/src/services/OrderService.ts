@@ -156,7 +156,10 @@ async updateOrderStatusByText(orderId: number, statusText: string): Promise<Orde
   if (!order) return null;
 
   const statusRepo = AppDataSource.getRepository(Order_status);
-  const newStatus = await statusRepo.findOne({ where: { status: statusText } });
+  const newStatus = await statusRepo
+      .createQueryBuilder("order_status")
+      .where("LOWER(order_status.status) = LOWER(:status)", { status: statusText })
+      .getOne();
 
   if (!newStatus) throw new Error("Invalid status text");
 

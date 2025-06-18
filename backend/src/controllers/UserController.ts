@@ -72,7 +72,7 @@ export class UserController {
             const user = req.body;
             const {username, password, email, phone} = req.body;
             const tokenResponse = await fetch(
-                'http://localhost:8080/realms/ecommserse/protocol/openid-connect/token',
+                'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/token',
                 {
                     method: 'POST',
                     headers: {
@@ -91,7 +91,7 @@ export class UserController {
             const adminToken = accessToken['access_token'];
 
             const userInfoResponse = await fetch(
-                'http://localhost:8080/admin/realms/ecommserse/users',
+                'http://keycloak:8080/admin/realms/ecommserse/users',
                 {
                     method: 'POST',
                     headers: {
@@ -122,7 +122,7 @@ export class UserController {
             console.log('userinforesponse:', userInfoResponse.status);
             // fetch client id here
             const clientResponse = await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/clients?clientId=express-api`,
+                `http://keycloak:8080/admin/realms/ecommserse/clients?clientId=express-api`,
                 {
                     method: 'GET',
                     headers: {
@@ -144,7 +144,7 @@ export class UserController {
             console.log(`Client ID: ${clientId}`);
             // fetch for user role
             const rolesResponse = await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/clients/${clientId}/roles`,
+                `http://keycloak:8080/admin/realms/ecommserse/clients/${clientId}/roles`,
                 {
                     method: 'GET',
                     headers: {
@@ -160,7 +160,7 @@ export class UserController {
             }
             // assign role 'user' for new user
             await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
+                `http://keycloak:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
                 {
                     method: 'POST',
                     headers: {
@@ -216,7 +216,7 @@ export class UserController {
                     else{
                         try {
                             const tokenResponse = await fetch(
-                                'http://localhost:8080/realms/ecommserse/protocol/openid-connect/token',
+                                'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/token',
                                 {
                                     method: 'POST',
                                     headers: {
@@ -244,7 +244,7 @@ export class UserController {
                                 }
                                 else{
                                     const userInfoResponse = await fetch(
-                                        'http://localhost:8080/realms/ecommserse/protocol/openid-connect/userinfo',
+                                        'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/userinfo',
                                         {
                                             method: 'GET',
                                             headers: {

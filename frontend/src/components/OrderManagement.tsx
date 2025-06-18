@@ -204,12 +204,14 @@ const OrderManagement: React.FC = () => {
       <table className="order-table">
         <thead>
           <tr>
-            <th>STT</th>
-            <th>Khách hàng</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-            <th>Ngày đặt</th>
-            <th>Hành động</th>
+            <th>#</th>
+            <th>Customer</th>
+            <th>Total</th>
+            {/*<th>Trạng thái</th>*/}
+            <th>Order Status</th>
+            <th>Order Date</th>
+
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -227,16 +229,16 @@ const OrderManagement: React.FC = () => {
                 </td>
                 <td>{(order.order_total ?? 0).toLocaleString()}₫</td>
 
-                <td>{order.orderStatus?.status || 'Đang xử lý'}</td>
+                {/*<td>{order.orderStatus?.status || 'Đang xử lý'}</td>*/}
 
-                <td>{order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : ''}</td>
+                {/*<td>{order.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : ''}</td>*/}
 
                 <td>
                   <select
                       value={order.orderStatus?.status ?? ''}
                       onChange={e => updateOrderStatus(order.id, e.target.value)}
                   >
-                    <option value="Preparing">Cancelled</option>
+                    <option value="Preparing">Preparing</option>
                     <option value="Shipping">Shipping</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>

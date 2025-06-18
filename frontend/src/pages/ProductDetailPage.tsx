@@ -46,7 +46,11 @@ const ProductDetail: React.FC = () => {
     fetch(`http://localhost:3001/api/product-items/${id}`)
       .then((res) => res.json())
       .then((item: ProductItem) => {
-        fetch(`http://localhost:3001/api/categories/${item.product.category_id}`)
+        fetch(`http://localhost:3001/api/categories/${item.product.category_id}`,{
+          headers:{
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          }
+        })
           .then((res) => res.json())
           .then((category) => {
             const fullProduct: Product = {

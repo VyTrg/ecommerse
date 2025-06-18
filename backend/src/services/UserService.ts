@@ -3,7 +3,7 @@ import {User_address} from "../entity/UserAddress"
 import {Address} from "../entity/Address"
 import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import {getAdminToken, getKeycloakId, reseterPassword} from "../middleware/keycloakToken";
 
 const userRepository = AppDataSource.getRepository(User);

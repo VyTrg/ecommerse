@@ -68,7 +68,7 @@ app.use("/api/auth", authRoutes);
 app.use("/admin/api/orders", keycloak.protect(isAuthenticated), adminOrderRoutes);
 app.use("/api/upload", keycloak.protect(adminOnly), uploadRoute);
 app.use("/api/invoice", keycloak.protect(isAuthenticated), invoice);
-
+app.use("/api/product-promotions", keycloak.protect(adminOnly), productPromotionRoutes);
 // Static upload files - only for admin
 app.use("/uploads", keycloak.protect(adminOnly), express.static(path.join(__dirname, "../uploads")));
 

@@ -30,7 +30,7 @@ const InvoiceButton: React.FC<Props> = ({ id }) => {
 
       if (!data || !Array.isArray(data.orderItems)) {
         console.error("Dữ liệu đơn hàng không hợp lệ:", data);
-        alert("Không thể tạo hóa đơn: đơn hàng thiếu sản phẩm.");
+        // alert("Không thể tạo hóa đơn: đơn hàng thiếu sản phẩm.");
         return;
       }
 
@@ -52,7 +52,10 @@ const InvoiceButton: React.FC<Props> = ({ id }) => {
         "http://localhost:3001/api/invoice/generate-invoice",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json",
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          },
           body: JSON.stringify({ orderData: orderForPdf }),
         }
       );
@@ -64,7 +67,7 @@ const InvoiceButton: React.FC<Props> = ({ id }) => {
       window.open(url);
     } catch (error) {
       console.error("Lỗi tạo hóa đơn:", error);
-      alert("Không thể in hóa đơn. Xem log để biết chi tiết.");
+      // alert("Không thể in hóa đơn. Xem log để biết chi tiết.");
     }
   };
 
