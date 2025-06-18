@@ -1,4 +1,4 @@
-import { Request, Response , NextFunction, RequestHandler } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { AppDataSource } from "../config/datasource";
 import { OrderService } from "../services/OrderService";
 import { Order } from "../entity/Order";
@@ -10,28 +10,25 @@ import { Image } from "../entity/Image";
 const orderService = new OrderService();
 
 export class OrderController {
-static async getAllOrders(req: Request, res: Response): Promise<void> {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+  // Lấy tất cả đơn hàng có phân trang
+  static async getAllOrders(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
 
-    const [orders, totalCount] = await AppDataSource.getRepository(Order).findAndCount({
-      skip,
-      take: limit,
-      order: { orderDate: "DESC" },
-      relations: ["user", "orderItems", "orderItems.productItem"]
-    });
+      const [orders, totalCount] = await AppDataSource.getRepository(Order).findAndCount({
+        skip,
+        take: limit,
+        order: { orderDate: "DESC" },
+        relations: ["user", "orderItems", "orderItems.productItem"],
+      });
 
-    
-res.json({
-  data: orders,
-  totalCount
-});
-
-  } catch (error) {
-    console.error("❌ Error fetching orders:", error);
-    res.status(500).json({ message: "Error fetching orders", error });
+      res.json({ data: orders, totalCount });
+    } catch (error) {
+      console.error("❌ Error fetching orders:", error);
+      res.status(500).json({ message: "Error fetching orders", error });
+    }
   }
 
   // Lấy đơn hàng theo ID
@@ -173,5 +170,4 @@ res.json({
       res.status(500).json({ message: "Internal server error" });
     }
   }
-  
 }

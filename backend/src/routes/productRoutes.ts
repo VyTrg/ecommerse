@@ -13,7 +13,7 @@ router.post("/",keycloak.protect(adminOnly), ProductController.createProduct);
 router.put("/:id",keycloak.protect(adminOnly), ProductController.updateProduct);
 
 
-router.get('/sale',keycloak.protect(adminOnly), ProductController.getSaleProducts);
+// router.get('/sale', ProductController.getSaleProducts);
 router.post("/",keycloak.protect(adminOnly), ProductController.createProduct);
 router.put("/:id",keycloak.protect(adminOnly), ProductController.updateProduct);
 router.delete("/:id", keycloak.protect(adminOnly),ProductController.deleteProduct);

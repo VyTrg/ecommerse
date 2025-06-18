@@ -111,8 +111,8 @@ async countUsers(): Promise<number> {
                 if (!isPasswordValid) {
                     return false;
                 }
-                const accessToken  = sessionStorage.getItem('token');
-                reseterPassword(accessToken as string, user.keycloakId, newPassword);
+                const accessToken  = await getAdminToken();
+                reseterPassword(accessToken, user.keycloakId, newPassword);
                 const hashedPassword = await bcrypt.hash(newPassword, 10);
                 await this.userRepository.update(id, {hash_password: hashedPassword});
             }

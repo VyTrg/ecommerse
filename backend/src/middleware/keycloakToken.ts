@@ -160,14 +160,14 @@ export async function reseterPassword(accessToken: string, keycloakId: string, n
     const userInfoResponse = await fetch(
         `http://localhost:8080/admin/realms/${REALM}/users/${keycloakId}/reset-password`,
         {
-            method: 'POST',
+            method: 'PUT',
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(
                 {
-                    "grant_type": "password",
+                    "type": "password",
                     "value": newPassword,
                     "temporary": false,
                     // "client_secret": KEYCLOAK_CLIENT_SECRET,

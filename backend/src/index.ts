@@ -65,7 +65,7 @@ app.use("/api/addresses", keycloak.protect(isAuthenticated), addressRoutes);
 app.use("/api/statistics", keycloak.protect(adminOnly), StatisticsRoutes);
 app.use("/api/order_items", keycloak.protect(isAuthenticated), Order_itemRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/admin/api/orders", keycloak.protect(adminOnly), adminOrderRoutes);
+app.use("/admin/api/orders", keycloak.protect(isAuthenticated), adminOrderRoutes);
 app.use("/api/upload", keycloak.protect(adminOnly), uploadRoute);
 app.use("/api/invoice", keycloak.protect(isAuthenticated), invoice);
 
