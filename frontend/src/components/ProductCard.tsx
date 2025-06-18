@@ -8,11 +8,13 @@ type Product = {
   name: string;
   img: string;
   price: number;
+  discountPrice?: number;
+  isOnSale?: boolean;
 };
 
 type Props = {
   product: Product;
-  onBuy: () => void;
+  onBuy?: () => void;
 };
 
 const ProductCard: React.FC<Props> = ({ product, onBuy }) => {
@@ -23,7 +25,8 @@ const ProductCard: React.FC<Props> = ({ product, onBuy }) => {
   };
 
   return (
-    <div className="product-card">
+    <div className={`product-card ${product.isOnSale ? 'sale-product' : ''}`}>
+      {product.isOnSale && <div className="sale-badge">SALE</div>}
       <img
         src={product.img}
         alt={product.name}
@@ -40,10 +43,25 @@ const ProductCard: React.FC<Props> = ({ product, onBuy }) => {
         >
           {product.name}
         </p>
-        <p className="product-price">{product.price}₫</p>
+        <div className="product-price">
+          {product.isOnSale ? (
+            <>
+              <span className="original-price">
+                {product.price.toLocaleString()}₫
+              </span>
+              <span className="discount-price">
+                {product.discountPrice?.toLocaleString()}₫
+              </span>
+            </>
+          ) : (
+            <span className="regular-price">
+              {product.price.toLocaleString()}₫
+            </span>
+          )}
+        </div>
       </div>
 
-      <button className="buy-btn" onClick={onBuy}>
+      <button className={`buy-btn ${product.isOnSale ? 'sale-btn' : ''}`} onClick={onBuy}>
         BUY NOW
       </button>
     </div>

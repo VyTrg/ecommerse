@@ -46,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
     { name: "Accessories", subcategories: ["ShoesAndBags", "Jewelry"] },
     { name: "Clothing", subcategories: ["Blazers", "Cardigan", "Skirt", "Jacket", "Dress", "Denim"] },
     { name: "Swimwear", subcategories: ["Bikinis", "Cover up", "One piece", "Pareo"] },
+    { name: "Sale", subcategories: ["Clothing", "Swimwear", "Accessories"] },
   ];
 
   const visibleCategories = allowedCategories
@@ -110,15 +111,32 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
                   {category.subcategories.map((sub) => (
                     <li
                       key={sub}
-                      className={filters.subcategory === String(subcategoryNameToId[sub]) ? "active" : ""}
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          category: category.name,
-                          subcategory: String(subcategoryNameToId[sub]),
-                          size: undefined, // reset size khi chọn subcategory mới
-                        }))
-                      }
+                      className={filters.category === sub ? "active" : ""}
+                      onClick={() => {
+                        if (category.name === "Sale" && ["Clothing", "Swimwear", "Accessories"].includes(sub)) {
+                          setFilters((prev) => ({
+                            ...prev,
+                            category: sub,
+                            subcategory: undefined,
+                            size: undefined,
+                          }));
+                          onFilterChange({
+                            ...filters,
+                            category: sub,
+                            subcategory: undefined,
+                            size: undefined,
+                            minPrice: priceRange[0],
+                            maxPrice: priceRange[1],
+                          });
+                        } else {
+                          setFilters((prev) => ({
+                            ...prev,
+                            category: category.name,
+                            subcategory: String(subcategoryNameToId[sub]),
+                            size: undefined,
+                          }));
+                        }
+                      }}
                     >
                       {sub}
                     </li>
@@ -136,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
       <div className="price-range-container">
         <Range
           step={1}
-          min={70}
+          min={0}
           max={1000}
           values={priceRange}
           onChange={(values) => setPriceRange([...values] as [number, number])}
@@ -174,18 +192,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onFilterChange, allowedCategories }) 
       <hr className="section-divider" />
 
       <h3>SHOP BY COLOR</h3>
-      <div className="color-filter-container">
-        <ul className="color-filter no-bullets">
-          {["Blue", "Dark Blue", "Fuschia", "Gold", "Green", "Light Pink", "Red", "Brown", "Yellow", "Purple"].map(
-            (color) => (
-              <li key={color} onClick={() => updateLocalFilters({ color })}>
-                <span className={`color-box ${color.toLowerCase().replace(/\s/g, "-")}`} />
-                {color}
-              </li>
-            )
-          )}
-        </ul>
-      </div>
+<div className="color-filter-container">
+  <ul className="color-filter no-bullets">
+    {["Blue", "Black", "Green", "Pink", "Red", "Brown", "Yellow", "Purple","White"].map(
+      (color) => (
+        <li
+          key={color}
+          onClick={() =>
+            updateLocalFilters({
+              color: filters.color === color ? undefined : color, // Toggle chọn/bỏ
+            })
+          }
+          className={filters.color === color ? "active" : ""}
+        >
+          <span className={`color-box ${color.toLowerCase().replace(/\s/g, "-")}`} />
+          {color}
+        </li>
+      )
+    )}
+  </ul>
+</div>
+
 
       {filters.category && (
         <>

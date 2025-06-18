@@ -9,15 +9,18 @@
     "skipLibCheck": true,
     "rootDir": "./src",
     "outDir": "./dist",
-    "typeRoots": ["./node_modules/@types", "./types"]
+    "baseUrl": "./",
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "paths": {
+      "@config/*": ["src/config/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@entity/*": ["src/entity/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@routes/*": ["src/routes/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"]
+    }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"],
-  "@config/*": ["src/config/*"],
-  "@controllers/*": ["src/controllers/*"],
-  "@entity/*": ["src/entity/*"],
-  "@middleware/*": ["src/middleware/*"],
-  "@routes/*": ["src/routes/*"],
-  "@services/*": ["src/services/*"],
-  "@utils/*": ["src/utils/*"]
+  "exclude": ["node_modules"]
 }

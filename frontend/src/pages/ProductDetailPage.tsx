@@ -16,6 +16,7 @@ type ProductItem = {
     description: string;
     all_rate: number;
     category_id: number;
+    productPromotions?: any[];
   };
 };
 
@@ -45,7 +46,11 @@ const ProductDetail: React.FC = () => {
     fetch(`http://localhost:3001/api/product-items/${id}`)
       .then((res) => res.json())
       .then((item: ProductItem) => {
-        fetch(`http://localhost:3001/api/categories/${item.product.category_id}`)
+        fetch(`http://localhost:3001/api/categories/${item.product.category_id}`,{
+          headers:{
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+          }
+        })
           .then((res) => res.json())
           .then((category) => {
             const fullProduct: Product = {
@@ -75,11 +80,29 @@ const ProductDetail: React.FC = () => {
   const item = product.productItems[0];
   const imageUrl = (img: any) => img?.image_url || '/fallback.jpg';
 
+  // Tính giá mới nếu có discount
+  let discountRate = 0;
+  let newPrice = item.price;
+  if (item.product && item.product.productPromotions) {
+    const now = new Date();
+    const validPromotion = item.product.productPromotions.find(
+      (pp: any) =>
+        pp.promotion &&
+        pp.promotion.discount_rate > 0 &&
+        new Date(pp.promotion.start_at) <= now &&
+        new Date(pp.promotion.end_at) >= now
+    );
+    if (validPromotion) {
+      discountRate = validPromotion.promotion.discount_rate;
+      newPrice = Math.round(item.price * (1 - discountRate));
+    }
+  }
+
   const handleAddToCart = () => {
     addToCart({
       id: item.id,
       name: product.name,
-      price: item.price,
+      price: discountRate > 0 ? newPrice : item.price,
       image: imageUrl(item.images[0]),
     });
     alert('✔ Sản phẩm đã được thêm vào giỏ hàng');
@@ -111,11 +134,26 @@ const ProductDetail: React.FC = () => {
         </div>
 
         <div className="product-details">
-          <div className="breadcrumb">
-            <Link to="/">Home</Link> 
-          </div>
+        
           <h1>{product.name}</h1>
-          <p className="price">{item.price.toLocaleString()}₫</p>
+          <p className="price">
+            {discountRate > 0 ? (
+              <>
+                <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                  {item.price.toLocaleString()}₫
+                </span>
+                <br />
+                <span style={{ color: '#e44d26', fontWeight: 'bold' }}>
+                  {newPrice.toLocaleString()}₫
+                </span>
+                {/* <span className="sale-badge">SALE</span> */}
+              </>
+            ) : (
+              <span style={{ color: '#333', fontWeight: 'bold' }}>
+                {item.price.toLocaleString()}₫
+              </span>
+            )}
+          </p>
           <p className="description">{product.description}</p>
 
           <div className="color-selection">
@@ -159,9 +197,9 @@ const ProductDetail: React.FC = () => {
         <button className={`tab ${activeTab === 'additional' ? 'active' : ''}`} onClick={() => setActiveTab('additional')}>
           THÔNG TIN BỔ SUNG
         </button>
-        <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+        {/* <button className={`tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
           ĐÁNH GIÁ (0)
-        </button>
+        </button> */}
       </div>
 
       <div className="tab-content">
@@ -186,9 +224,9 @@ const ProductDetail: React.FC = () => {
             </tbody>
           </table>
         )}
-        {activeTab === 'reviews' && (
+        {/* {activeTab === 'reviews' && (
           <p>Chưa có đánh giá nào.</p>
-        )}
+        )} */}
       </div>
     </div>
   );

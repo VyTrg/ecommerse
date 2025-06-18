@@ -2,6 +2,7 @@ import {Router } from 'express';
 import { ProductItemController } from '../controllers/ProductItemController';
 import { keycloak, adminOnly } from "../middleware/keycloak";
 const router = Router();
+router.get("/paginated", ProductItemController.getPaginatedProductItems);
 
 router.get('/', ProductItemController.getAllProductItems);
 router.get('/:id', ProductItemController.getProductItemById);

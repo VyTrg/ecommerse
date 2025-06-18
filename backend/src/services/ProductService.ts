@@ -20,7 +20,9 @@ export class ProductService {
         "productItems",
         "productItems.size",
         "productItems.color",
-        "productItems.images"
+        "productItems.images",
+        "productPromotions",
+        "productPromotions.promotion"
       ]
     });
   }
@@ -35,20 +37,22 @@ async countProducts(categoryIds: number[]): Promise<number> {
   return await query.getCount();
 }
 
-async getProductsPaginated(categoryIds: number[], offset: number, limit: number): Promise<Product[]> {
-  const query = AppDataSource.getRepository(Product)
-    .createQueryBuilder('product')
-    .leftJoinAndSelect('product.productItems', 'productItems')
-    .leftJoinAndSelect('productItems.images', 'images')
-    .orderBy('product.id', 'DESC')
+async getProductsPaginated(matchedCategoryIds: number[] = [], offset: number = 0, limit: number = 10): Promise<Product[]> {
+  const queryBuilder = this.productRepository
+    .createQueryBuilder("product")
+    .leftJoinAndSelect("product.productItems", "productItems")
+    .leftJoinAndSelect("productItems.images", "images")
+    .leftJoinAndSelect("product.productPromotions", "productPromotions")
+    .leftJoinAndSelect("productPromotions.promotion", "promotion")
+    .orderBy("product.id", "DESC")
     .skip(offset)
     .take(limit);
 
-  if (categoryIds.length > 0) {
-    query.andWhere('product.category_id IN (:...categoryIds)', { categoryIds });
+  if (matchedCategoryIds.length > 0) {
+    queryBuilder.where("product.category_id IN (:...matchedCategoryIds)", { matchedCategoryIds });
   }
 
-  return await query.getMany();
+  return await queryBuilder.getMany();
 }
 
  
@@ -60,7 +64,9 @@ async getProductsPaginated(categoryIds: number[], offset: number, limit: number)
         "productItems",
         "productItems.size",
         "productItems.color",
-        "productItems.image"
+        "productItems.images",
+        "productPromotions",
+        "productPromotions.promotion"
       ]
     });
   }
@@ -74,7 +80,9 @@ async getProductsPaginated(categoryIds: number[], offset: number, limit: number)
         "productItems",
         "productItems.size",
         "productItems.color",
-        "productItems.image"
+        "productItems.images",
+        "productPromotions",
+        "productPromotions.promotion"
       ]
     });
   }
@@ -92,7 +100,9 @@ async getProductsPaginated(categoryIds: number[], offset: number, limit: number)
         "productItems",
         "productItems.size",
         "productItems.color",
-        "productItems.image"
+        "productItems.images",
+        "productPromotions",
+        "productPromotions.promotion"
       ]
     });
   }
@@ -120,6 +130,10 @@ async getProductsPaginated(categoryIds: number[], offset: number, limit: number)
     if (data.category) {
       const category = await this.categoryRepository.findOne({ where: { id: data.category.id } });
       if (category) product.category = category;
+    }
+
+    if (data.all_rate === undefined) {
+      data.all_rate = product.all_rate;
     }
 
     Object.assign(product, data);

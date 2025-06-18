@@ -2,6 +2,9 @@ import { DataSource, Repository } from "typeorm";
 import { Order } from "../entity/Order";
 import { OrderItem } from "../entity/OrderItems";
 import { AppDataSource } from "../config/datasource";
+
+const orderRepository = AppDataSource.getRepository(Order);
+
 import { Order_status } from "../entity/Order_status";
 
 
@@ -18,19 +21,19 @@ export class OrderService {
     this.statusRepository = AppDataSource.getRepository(Order_status);
   }
 
-  // Lấy tất cả đơn hàng
-  async getAllOrders(): Promise<Order[]> {
-    return this.orderRepository.find({
-      relations: [
-        "user",
-        "shippingAddress",
-        "shippingMethod",
-        "orderStatus",
-        "orderItems",
+ 
+async getAllOrders(page: number, limit: number) {
+  const offset = (page - 1) * limit;
 
-      ],
-    });
-  }
+  const [orders, totalCount] = await this.orderRepository.findAndCount({
+    skip: offset,
+    take: limit,
+    relations: ["user", "orderStatus"], // thêm quan hệ nếu cần
+    order: { orderDate: "DESC" }
+  });
+
+  return { data: orders, totalCount };
+}
 
   // Lấy đơn hàng theo ID
   async getOrderById(id: number): Promise<Order | null> {
@@ -140,7 +143,10 @@ export class OrderService {
     return this.orderItemRepository.save(orderItem);
   }
 
-  // Cập nhật trạng thái đơn hàng bằng status text
+async getOrderCount(): Promise<number> {
+  return await this.orderRepository.count();
+}
+
 async updateOrderStatusByText(orderId: number, statusText: string): Promise<Order | null> {
   const order = await this.orderRepository.findOne({
     where: { id: orderId },
@@ -150,7 +156,10 @@ async updateOrderStatusByText(orderId: number, statusText: string): Promise<Orde
   if (!order) return null;
 
   const statusRepo = AppDataSource.getRepository(Order_status);
-  const newStatus = await statusRepo.findOne({ where: { status: statusText } });
+  const newStatus = await statusRepo
+      .createQueryBuilder("order_status")
+      .where("LOWER(order_status.status) = LOWER(:status)", { status: statusText })
+      .getOne();
 
   if (!newStatus) throw new Error("Invalid status text");
 
@@ -158,30 +167,40 @@ async updateOrderStatusByText(orderId: number, statusText: string): Promise<Orde
 
   return this.orderRepository.save(order);
 }
-  async getOrdersByUserId(userId: number): Promise<Order[]> {
-    return this.orderRepository.find({
-      where: { user: { id: userId } },
-      relations: ["user", "shippingAddress", "shippingMethod", "orderStatus", "orderItems", "orderItems.productItem"]
-    });
-  }
-  async updateStatus(orderId: number, statusId: number): Promise<Order | null> {
-    const order = await this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ["orderStatus", "user", "shippingAddress"],
-    });
 
-    if (!order) return null;
-
-    const status = await this.statusRepository.findOneBy({ id: statusId });
-    if (!status) throw new Error("Order status not found");
-
-    order.orderStatus = status;
-    await this.orderRepository.save(order);
-
-    // Load lại đầy đủ dữ liệu sau khi save
-    return this.orderRepository.findOne({
-      where: { id: orderId },
-      relations: ["user", "orderStatus", "shippingAddress"],
-    });
-  }
+async getOrdersByUserId(userId: number): Promise<Order[]> {
+  return this.orderRepository.find({
+    where: { user: { id: userId } },
+    relations: [
+      "user",
+      "shippingAddress",
+      "shippingMethod",
+      "orderStatus",
+      "orderItems",
+      "orderItems.productItem"
+    ]
+  });
 }
+
+async updateStatus(orderId: number, statusId: number): Promise<Order | null> {
+  const order = await this.orderRepository.findOne({
+    where: { id: orderId },
+    relations: ["orderStatus", "user", "shippingAddress"],
+  });
+
+  if (!order) return null;
+
+  const status = await this.statusRepository.findOneBy({ id: statusId });
+  if (!status) throw new Error("Order status not found");
+
+  order.orderStatus = status;
+  await this.orderRepository.save(order);
+
+  return this.orderRepository.findOne({
+    where: { id: orderId },
+    relations: ["user", "orderStatus", "shippingAddress"],
+  });
+}
+
+}
+

@@ -9,8 +9,18 @@ const userService = new UserService();
 export class UserController {
     static async getAllUsers(req: Request, res: Response) {
         try {
-            const users = await userService.getAllUsers();
-            res.json(users);
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+
+            const [users, totalCount] = await userService.getAllUsersWithPagination(page, limit);
+
+            res.json({
+                data: users,
+                totalCount,
+                currentPage: page,
+                totalPages: Math.ceil(totalCount / limit)
+            });
+
         } catch (error) {
             res.status(500).json({ message: "Error fetching users", error });
         }
@@ -62,7 +72,7 @@ export class UserController {
             const user = req.body;
             const {username, password, email, phone} = req.body;
             const tokenResponse = await fetch(
-                'http://localhost:8080/realms/ecommserse/protocol/openid-connect/token',
+                'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/token',
                 {
                     method: 'POST',
                     headers: {
@@ -81,7 +91,7 @@ export class UserController {
             const adminToken = accessToken['access_token'];
 
             const userInfoResponse = await fetch(
-                'http://localhost:8080/admin/realms/ecommserse/users',
+                'http://keycloak:8080/admin/realms/ecommserse/users',
                 {
                     method: 'POST',
                     headers: {
@@ -112,7 +122,7 @@ export class UserController {
             console.log('userinforesponse:', userInfoResponse.status);
             // fetch client id here
             const clientResponse = await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/clients?clientId=express-api`,
+                `http://keycloak:8080/admin/realms/ecommserse/clients?clientId=express-api`,
                 {
                     method: 'GET',
                     headers: {
@@ -134,7 +144,7 @@ export class UserController {
             console.log(`Client ID: ${clientId}`);
             // fetch for user role
             const rolesResponse = await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/clients/${clientId}/roles`,
+                `http://keycloak:8080/admin/realms/ecommserse/clients/${clientId}/roles`,
                 {
                     method: 'GET',
                     headers: {
@@ -150,7 +160,7 @@ export class UserController {
             }
             // assign role 'user' for new user
             await fetch(
-                `http://localhost:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
+                `http://keycloak:8080/admin/realms/ecommserse/users/${keycloakId}/role-mappings/clients/${clientId}`,
                 {
                     method: 'POST',
                     headers: {
@@ -172,6 +182,16 @@ export class UserController {
             res.status(500).json({ message: "Error creating user", error });
         }
     }
+
+    static async getUserCount(req: Request, res: Response) {
+  try {
+    const count = await userService.countUsers();
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: "Error counting users", error });
+  }
+}
+
 
     static async getCurrentUser(req: Request, res: Response){
         try {
@@ -196,7 +216,7 @@ export class UserController {
                     else{
                         try {
                             const tokenResponse = await fetch(
-                                'http://localhost:8080/realms/ecommserse/protocol/openid-connect/token',
+                                'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/token',
                                 {
                                     method: 'POST',
                                     headers: {
@@ -224,7 +244,7 @@ export class UserController {
                                 }
                                 else{
                                     const userInfoResponse = await fetch(
-                                        'http://localhost:8080/realms/ecommserse/protocol/openid-connect/userinfo',
+                                        'http://keycloak:8080/realms/ecommserse/protocol/openid-connect/userinfo',
                                         {
                                             method: 'GET',
                                             headers: {
@@ -269,6 +289,7 @@ export class UserController {
         }
     }
 
+
     static async changeInfo(req: Request, res: Response){
         try {
             if (!req.body) {
@@ -290,4 +311,5 @@ export class UserController {
             res.status(500).json({ message: 'Error fetching user', error });
         }
     }
+
 }

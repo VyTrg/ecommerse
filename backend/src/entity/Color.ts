@@ -10,8 +10,8 @@ export class Color {
   name!: string;
 
   @Column()
-  color_code!: string; // Mã màu (ví dụ: #FFFFFF).
+  color_code!: string; 
 
   @OneToMany(() => ProductItem, (productItem) => productItem.color)
-  productItems!: ProductItem[]; // Mối quan hệ một-nhiều với ProductItem.
+  productItems!: ProductItem[]; 
 }

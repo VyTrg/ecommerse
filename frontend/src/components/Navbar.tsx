@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../styles/Navbar.css";
+import "../styles/navbar.css";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaUser,
@@ -97,9 +97,9 @@ const Navbar: React.FC<NavbarProps> = ({ onCartClick }) => {
         </nav>
 
         {/* Center - Logo */}
-        <div className="nav-logo">
-          <img className="navbar-logo" src="src/assets/logo.png" alt="Logo" />
-        </div>
+         <Link to="/">
+    {/*<img className="navbar-logo" src="src/assets/logo.png" alt="Logo" />*/}
+  </Link>
 
         {/* Right - Icons */}
         <nav className="nav-section right">

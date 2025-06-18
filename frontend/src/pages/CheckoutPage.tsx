@@ -75,6 +75,10 @@ const handlePlaceOrder = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+
+
       },
       body: JSON.stringify(payload),
     });
@@ -83,10 +87,12 @@ const handlePlaceOrder = async () => {
 
     alert("Đặt hàng thành công!");
 const createdOrder = await res.json();
+console.log("ORDER CREATED:", createdOrder);
+
     
     const orderForPdf = {
       customerName: isGuest ? formData.guest_name : currentUser.name,
-      orderId: "ORD-" + createdOrder.id,
+      orderId: "ORD-" + createdOrder.order.id,
       total: total,
       items: cart.map((item) => ({
         name: item.name,
@@ -98,7 +104,10 @@ const createdOrder = await res.json();
     
     const invoiceRes = await fetch("http://localhost:3001/api/invoice/generate-invoice", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" ,
+
+            'Authorization': `Bearer ${sessionStorage.getItem("token")}`,
+         },
       body: JSON.stringify({ orderData: orderForPdf }),
     });
 

@@ -1,5 +1,6 @@
 import React, { JSX, useEffect, useState } from "react";
 
+// ==== TYPES ====
 type Product = {
   id: number;
   name: string;
@@ -16,6 +17,7 @@ type Category = {
   children?: Category[];
 };
 
+// ==== COMPONENT ====
 const CategoryAdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [flatCategories, setFlatCategories] = useState<Category[]>([]);
@@ -24,6 +26,8 @@ const CategoryAdminPage: React.FC = () => {
   const [selectedParent, setSelectedParent] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:3001/api/categories")
@@ -33,6 +37,36 @@ const CategoryAdminPage: React.FC = () => {
         setCategories(buildTree(data));
       });
   }, []);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setExpandedIds([]);
+      setSearching(false);
+      return;
+    }
+
+    const matchedIds: number[] = [];
+
+    const findMatches = (cats: Category[]) => {
+      cats.forEach((cat) => {
+        const match = cat.name.toLowerCase().includes(searchTerm.toLowerCase());
+        if (match) {
+          let parent = cat.parent;
+          while (parent) {
+            matchedIds.push(parent.id);
+            parent = flatCategories.find((c) => c.id === parent?.id)?.parent || null;
+          }
+        }
+        if (cat.children?.length) {
+          findMatches(cat.children);
+        }
+      });
+    };
+
+    findMatches(categories);
+    setExpandedIds([...new Set(matchedIds)]);
+    setSearching(true);
+  }, [searchTerm]);
 
   const buildTree = (flatList: Category[]): Category[] => {
     const idMap: { [key: number]: Category & { children: Category[] } } = {};
@@ -98,6 +132,14 @@ const CategoryAdminPage: React.FC = () => {
     let items: JSX.Element[] = [];
 
     list.forEach((cat) => {
+      const match = cat.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const hasMatchingChildren =
+        cat.children?.some((child) =>
+          child.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+      if (searchTerm && !match && !hasMatchingChildren) return;
+
       items.push(
         <div
           key={cat.id}
@@ -125,7 +167,7 @@ const CategoryAdminPage: React.FC = () => {
               {expandedIds.includes(cat.id) ? "▼" : "▶"}
             </span>
           ) : (
-            <span style={{ width: "20px",padding:"20px"}}></span>
+            <span style={{ width: "20px", padding: "20px" }}></span>
           )}
 
           {editingId === cat.id ? (
@@ -140,7 +182,17 @@ const CategoryAdminPage: React.FC = () => {
             </>
           ) : (
             <>
-              <span style={{ flex: 1 }}>{cat.name}</span>
+              <span style={{ flex: 1 }}>
+                {searchTerm ? (
+                  <>{cat.name.split(new RegExp(`(${searchTerm})`, "gi")).map((part, idx) =>
+                    part.toLowerCase() === searchTerm.toLowerCase()
+                      ? <mark key={idx}>{part}</mark>
+                      : <span key={idx}>{part}</span>
+                  )}</>
+                ) : (
+                  cat.name
+                )}
+              </span>
               <button onClick={() => handleEdit(cat.id, cat.name)}>✏️ Sửa</button>
               <button onClick={() => handleDelete(cat.id)}>🗑️ Xoá</button>
             </>
@@ -148,7 +200,7 @@ const CategoryAdminPage: React.FC = () => {
         </div>
       );
 
-      if (expandedIds.includes(cat.id) && cat.children && cat.children.length > 0) {
+      if (expandedIds.includes(cat.id) && cat.children?.length) {
         items = items.concat(renderFlatList(cat.children, level + 1));
       }
     });
@@ -166,7 +218,7 @@ const CategoryAdminPage: React.FC = () => {
         margin: "auto",
       }}
     >
-      <h2 style={{ textAlign: "center",padding:"20px", }}>🗂️ Quản lý danh mục</h2>
+      <h2 style={{ textAlign: "center", padding: "20px" }}>🗂️ Quản lý danh mục</h2>
 
       <div
         style={{
@@ -198,6 +250,13 @@ const CategoryAdminPage: React.FC = () => {
             </option>
           ))}
         </select>
+        <input
+          type="text"
+          placeholder=" Tìm kiếm danh mục..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ padding: "8px", flex: "1 1 200px" }}
+        />
         <button onClick={handleAdd} style={{ padding: "8px 16px" }}>
           ➕ Thêm
         </button>

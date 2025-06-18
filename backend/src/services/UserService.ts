@@ -3,9 +3,10 @@ import {User_address} from "../entity/UserAddress"
 import {Address} from "../entity/Address"
 import { Repository } from "typeorm";
 import { AppDataSource } from "../config/datasource";
-import bcrypt from "bcrypt";
-import {getAdminToken, getKeycloakId} from "../middleware/keycloakToken";
+import bcrypt from "bcryptjs";
+import {getAdminToken, getKeycloakId, reseterPassword} from "../middleware/keycloakToken";
 
+const userRepository = AppDataSource.getRepository(User);
 export class UserService {
     private userRepository: Repository<User>;
     private addressRepository: Repository<Address>;
@@ -20,6 +21,16 @@ export class UserService {
 
     async getAllUsers(): Promise<User[]> {
         return await this.userRepository.find({relations: ['carts', 'orders']});
+    }
+
+    async getAllUsersWithPagination(page: number, limit: number): Promise<[User[], number]> {
+        const skip = (page - 1) * limit;
+        return await this.userRepository.findAndCount({
+            skip,
+            take: limit,
+            order: { id: "ASC" },
+            relations: ['carts', 'orders']
+        });
     }
 
     async getUserById(id: number): Promise<User | null> {
@@ -80,6 +91,11 @@ export class UserService {
             where: { username: username, hash_password: password },
         });
     }
+
+async countUsers(): Promise<number> {
+    return await this.userRepository.count();
+}
+
     async changeInfor(id: number, username: string, email: string, phone: string, oldPassword: string, newPassword: string): Promise<boolean> {
         try {
             const user = await this.getUserById(id);
@@ -87,6 +103,7 @@ export class UserService {
                 return false;
             }
             if(username || email || phone){
+
                 await this.userRepository.update(id, {username: username, email: email, phone: phone});
             }
             if(oldPassword && newPassword){
@@ -94,6 +111,8 @@ export class UserService {
                 if (!isPasswordValid) {
                     return false;
                 }
+                const accessToken  = await getAdminToken();
+                reseterPassword(accessToken, user.keycloakId, newPassword);
                 const hashedPassword = await bcrypt.hash(newPassword, 10);
                 await this.userRepository.update(id, {hash_password: hashedPassword});
             }
@@ -104,5 +123,6 @@ export class UserService {
         }
         return true;
     }
+
 
 }

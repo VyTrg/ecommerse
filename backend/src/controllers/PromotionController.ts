@@ -33,7 +33,7 @@ export const createPromotion = async (req: Request, res: Response): Promise<void
 
 // Xoá khuyến mãi theo ID
 export const deletePromotion = async (
-  req: Request<{ id: string }>, // 👈 Chỉ rõ kiểu của params
+  req: Request<{ id: string }>, //  Chỉ rõ kiểu của params
   res: Response
 ): Promise<void> => {
   try {

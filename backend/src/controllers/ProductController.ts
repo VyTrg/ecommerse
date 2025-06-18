@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ProductService } from "../services/ProductService";
 import { AppDataSource } from "../config/datasource";
 import { Category } from "../entity/Category";
+import { Product } from "../entity/Product";
 
 const productService = new ProductService();
 
@@ -71,54 +72,67 @@ export class ProductController {
 
 
   static getAllProducts = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const categoryName = req.query.category?.toString().toLowerCase();
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const offset = (page - 1) * limit;
+    try {
+      const categoryName = req.query.category?.toString().toLowerCase();
+      const page = req.query.page ? parseInt(req.query.page as string) : null;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : null;
+      const offset = page && limit ? (page - 1) * limit : 0;
 
-    const categoryRepo = AppDataSource.getRepository(Category);
-    let matchedCategoryIds: number[] = [];
+      const categoryRepo = AppDataSource.getRepository(Category);
+      let matchedCategoryIds: number[] = [];
 
-    if (categoryName) {
-      const allCategories = await categoryRepo.find({ relations: ["parent"] });
 
-      const parentCategory = allCategories.find(
-        (c) => c.name.toLowerCase() === categoryName
-      );
-
-      if (!parentCategory) {
-        res.json({ data: [], totalCount: 0 });
-        return;
+      if (categoryName) {
+        const allCategories = await categoryRepo.find({ relations: ["parent"] });
+        const parentCategory = allCategories.find(
+          (c) => c.name.toLowerCase() === categoryName
+        );
+        if (!parentCategory) {
+          res.json({ data: [], totalCount: 0 });
+          return;
+        }
+        matchedCategoryIds = allCategories
+          .filter((c) => c.id === parentCategory.id || c.parent?.id === parentCategory.id)
+          .map((c) => c.id);
       }
 
-      matchedCategoryIds = allCategories
-        .filter((c) => c.id === parentCategory.id || c.parent?.id === parentCategory.id)
-        .map((c) => c.id);
+      let products: Product[];
+      let totalCount: number;
+
+      if (categoryName && matchedCategoryIds.length === 0) {
+        // Nếu có categoryName nhưng không tìm thấy category ID phù hợp
+        products = [];
+        totalCount = 0;
+      } else if (page && limit) {
+        // Có phân trang và có thể có lọc theo danh mục
+        totalCount = await productService.countProducts(matchedCategoryIds);
+        products = await productService.getProductsPaginated(matchedCategoryIds, offset, limit);
+      } else if (categoryName && matchedCategoryIds.length > 0) {
+        // Không có phân trang nhưng có lọc theo danh mục
+        products = await productService.getProductsByCategoryIds(matchedCategoryIds);
+        totalCount = products.length;
+      } else {
+        // Không có categoryName và không có phân trang, trả về tất cả sản phẩm
+        products = await productService.getAllProducts();
+        totalCount = products.length;
+      }
+
+      console.log("ProductController - Products before response:", JSON.stringify(products, null, 2));
+      res.json({
+        data: products,
+        totalCount: totalCount
+      });
+    } catch (error) {
+      console.error("❌ Error in getAllProducts:", error);
+      res.status(500).json({
+        message: "Error fetching products",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
     }
-
-    // Đếm total
-    const totalCount = await productService.countProducts(matchedCategoryIds);
-
-    // Lấy product có phân trang
-    const products = await productService.getProductsPaginated(matchedCategoryIds, offset, limit);
-
-    res.json({
-      data: products,
-      totalCount: totalCount
-    });
-
-  } catch (error) {
-    console.error("❌ Error in getAllProducts:", error);
-    res.status(500).json({
-      message: "Error fetching products",
-      error: {
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      },
-    });
-  }
-};
+  };
 
 
   static getProductById = async (req: Request, res: Response): Promise<void> => {
@@ -206,12 +220,39 @@ export class ProductController {
         product.name.toLowerCase().includes(query)
       );
 
+      console.log("ProductController - Search Results before response:", JSON.stringify(filtered, null, 2));
       console.log(`🔎 Search matched ${filtered.length} product(s) with query "${query}"`);
       res.json(filtered);
     } catch (error) {
       console.error("❌ Error searching products:", error);
       res.status(500).json({
         message: "Error searching products",
+        error: {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        },
+      });
+    }
+  };
+
+  static getSaleProducts = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const now = new Date();
+      const productRepo = AppDataSource.getRepository(Product);
+      const products = await productRepo
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.productItems', 'productItems')
+        .leftJoinAndSelect('product.productPromotions', 'productPromotions')
+        .leftJoinAndSelect('productPromotions.promotion', 'promotion')
+        .where('promotion.discount_rate > 0')
+        .andWhere('promotion.start_at <= :now AND promotion.end_at >= :now', { now })
+        .getMany();
+
+      res.json(products);
+    } catch (error) {
+      console.error(" Error in getSaleProducts:", error);
+      res.status(500).json({
+        message: "Error fetching sale products",
         error: {
           message: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
